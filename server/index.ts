@@ -128,8 +128,10 @@ app.get('/api/tasks', async (req, res) => {
     let query = 'SELECT * FROM tasks';
     let params: any[] = [];
     if (userId) {
-      query = 'SELECT * FROM tasks WHERE userId = ? OR CAST(data AS CHAR) LIKE ?';
-      params = [userId, `%${userId}%`];
+      const cleanId = userId.toLowerCase().trim();
+      const shortId = cleanId.split('@')[0];
+      query = 'SELECT * FROM tasks WHERE LOWER(userId) = ? OR LOWER(userId) = ? OR LOWER(CAST(data AS CHAR)) LIKE ? OR LOWER(CAST(data AS CHAR)) LIKE ?';
+      params = [cleanId, shortId, `%${cleanId}%`, `%${shortId}%`];
     }
     query += ' ORDER BY dueDate ASC, dueTime ASC';
     const [rows]: any = await pool.query(query, params);

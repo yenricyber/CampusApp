@@ -50,6 +50,27 @@ export default function App() {
     fetchTasks(userStudentId);
   }, []);
 
+  // Sincronización continua en tiempo real entre múltiples dispositivos (Laptop, Celular, Vercel)
+  useEffect(() => {
+    if (!currentUser) return;
+    const uId = currentUser.studentId || (currentUser as any).id || '';
+    if (!uId) return;
+
+    const interval = setInterval(() => {
+      fetchTasks(uId);
+    }, 4000);
+
+    const handleFocus = () => {
+      fetchTasks(uId);
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [currentUser]);
+
   // Motor de notificaciones en tiempo real (revisa tareas cada 3 segundos)
   useEffect(() => {
     const interval = setInterval(() => {
@@ -122,13 +143,6 @@ export default function App() {
   const fetchTasks = async (userStudentId?: string) => {
     try {
       const targetId = userStudentId || currentUser?.studentId || '';
-      if (targetId) {
-        const cached = localStorage.getItem(`campus_tasks_${targetId}`);
-        if (cached) {
-          setTasks(JSON.parse(cached));
-        }
-      }
-
       const url = targetId ? `/api/tasks?userId=${encodeURIComponent(targetId)}` : '/api/tasks';
       const response = await fetch(url);
       if (response.ok) {
