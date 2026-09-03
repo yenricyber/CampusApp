@@ -13,7 +13,8 @@ export const RegistroScreen: React.FC<RegistroScreenProps> = ({ onNavigate, onLo
   const [studentId, setStudentId] = useState('');
   const [fullName, setFullName] = useState('');
   const [career, setCareer] = useState('');
-  const [selectedSemester, setSelectedSemester] = useState(1);
+  const [periodType, setPeriodType] = useState<'Semestre' | 'Cuatrimestre'>('Semestre');
+  const [periodNumber, setPeriodNumber] = useState(1);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -33,7 +34,7 @@ export const RegistroScreen: React.FC<RegistroScreenProps> = ({ onNavigate, onLo
     }
   };
 
-  const semesters = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+  const periods = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
   const hasEdu = studentId.includes('@') && studentId.includes('.edu');
   const passwordsMatch = password.length > 0 && password === confirmPassword;
@@ -52,7 +53,7 @@ export const RegistroScreen: React.FC<RegistroScreenProps> = ({ onNavigate, onLo
           password,
           name: fullName,
           program: career,
-          semester: `${selectedSemester}º Semestre`,
+          semester: `${periodNumber}º ${periodType}`,
           avatarUrl: avatarBase64 || ASSETS.userAvatar
         }),
       });
@@ -255,27 +256,57 @@ export const RegistroScreen: React.FC<RegistroScreenProps> = ({ onNavigate, onLo
               </div>
             </div>
 
-            {/* 4. Semestre / Grado Actual */}
-            <div className="flex flex-col gap-space-2xs">
-              <label className="font-label-md text-label-md text-on-surface font-semibold flex items-center justify-between">
-                <span>Semestre Actual</span>
-                <span className="font-label-sm text-label-sm text-primary font-bold">
-                  {selectedSemester}º Semestre
+            {/* 4. Periodo Académico (Semestre / Cuatrimestre) */}
+            <div className="flex flex-col gap-space-xs">
+              <div className="flex items-center justify-between">
+                <label className="font-label-md text-label-md text-on-surface font-semibold">
+                  Periodo Académico
+                </label>
+                <span className="px-3 py-1 rounded-full bg-primary-container text-on-primary font-label-sm text-label-sm font-bold shadow-xs">
+                  {periodNumber}º {periodType}
                 </span>
-              </label>
-              <div className="flex items-center gap-space-xs overflow-x-auto py-1 no-scrollbar -mx-1 px-1">
-                {semesters.map((sem) => (
+              </div>
+
+              {/* Selector Semestre vs Cuatrimestre */}
+              <div className="grid grid-cols-2 p-1 rounded-xl bg-surface-container-low border border-surface-container text-on-surface font-label-md text-label-md">
+                <button
+                  type="button"
+                  onClick={() => setPeriodType('Semestre')}
+                  className={`py-2 rounded-lg font-semibold transition-all cursor-pointer ${
+                    periodType === 'Semestre'
+                      ? 'bg-surface text-primary shadow-xs'
+                      : 'text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  Semestre
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPeriodType('Cuatrimestre')}
+                  className={`py-2 rounded-lg font-semibold transition-all cursor-pointer ${
+                    periodType === 'Cuatrimestre'
+                      ? 'bg-surface text-primary shadow-xs'
+                      : 'text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  Cuatrimestre
+                </button>
+              </div>
+
+              {/* Cuadrícula de Números de Periodo */}
+              <div className="grid grid-cols-5 gap-2 pt-1">
+                {periods.map((num) => (
                   <button
-                    key={sem}
+                    key={num}
                     type="button"
-                    onClick={() => setSelectedSemester(sem)}
-                    className={`flex-shrink-0 px-space-sm h-9 rounded-full font-label-md text-label-md font-medium transition-colors ${
-                      selectedSemester === sem
-                        ? 'bg-primary-container text-on-primary shadow-xs font-bold'
-                        : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container'
+                    onClick={() => setPeriodNumber(num)}
+                    className={`h-10 rounded-lg font-label-md text-label-md font-semibold transition-all cursor-pointer ${
+                      periodNumber === num
+                        ? 'bg-primary text-on-primary shadow-sm scale-[1.02]'
+                        : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
                     }`}
                   >
-                    {sem}º{sem === 9 ? '+' : ''}
+                    {num}º
                   </button>
                 ))}
               </div>
