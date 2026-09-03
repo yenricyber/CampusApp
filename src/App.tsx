@@ -88,18 +88,22 @@ export default function App() {
   const handleLoginSuccess = (user: UserProfile) => {
     setCurrentUser(user);
     localStorage.setItem('currentUser', JSON.stringify(user));
+    fetchTasks(user.studentId);
   };
 
   const handleLogout = () => {
-    setCurrentUser(null);
     localStorage.removeItem('currentUser');
+    setCurrentUser(null);
     setCurrentScreen('login');
     setScreenHistory(['login']);
+    setTasks([]);
   };
 
-  const fetchTasks = async () => {
+  const fetchTasks = async (userStudentId?: string) => {
     try {
-      const response = await fetch('/api/tasks');
+      const targetId = userStudentId || currentUser?.studentId || '';
+      const url = targetId ? `/api/tasks?userId=${encodeURIComponent(targetId)}` : '/api/tasks';
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
         setTasks(data);
@@ -129,14 +133,18 @@ export default function App() {
 
   const handleAddTask = async (newTask: AcademicTask) => {
     try {
+      const taskWithUser = {
+        ...newTask,
+        userId: currentUser?.studentId || currentUser?.id || '',
+      };
       const res = await fetch('/api/tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newTask),
+        body: JSON.stringify(taskWithUser),
       });
       if (res.ok) {
-        setTasks((prev) => [newTask, ...prev]);
-        setSelectedTask(newTask);
+        setTasks((prev) => [taskWithUser, ...prev]);
+        setSelectedTask(taskWithUser);
       }
     } catch (error) {
       console.error('Failed to add task', error);

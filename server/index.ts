@@ -28,6 +28,7 @@ const initDB = async () => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS tasks (
         id VARCHAR(255) PRIMARY KEY,
+        userId VARCHAR(255),
         code VARCHAR(50),
         courseName VARCHAR(255),
         moduleOrDetail VARCHAR(255),
@@ -46,9 +47,10 @@ const initDB = async () => {
     `);
     try {
       await pool.query(`ALTER TABLE users ADD COLUMN avatarUrl LONGTEXT`);
-    } catch (e) {
-      // Column likely already exists
-    }
+    } catch (e) {}
+    try {
+      await pool.query(`ALTER TABLE tasks ADD COLUMN userId VARCHAR(255)`);
+    } catch (e) {}
     console.log('Tables are ready');
   } catch (error) {
     console.error('Failed to init DB:', error);
@@ -105,10 +107,19 @@ app.delete('/api/users/:studentId', async (req, res) => {
 // --- Tasks Endpoints ---
 app.get('/api/tasks', async (req, res) => {
   try {
-    const [rows]: any = await pool.query('SELECT * FROM tasks ORDER BY dueDate ASC, dueTime ASC');
+    const userId = req.query.userId as string;
+    let query = 'SELECT * FROM tasks';
+    let params: any[] = [];
+    if (userId) {
+      query = 'SELECT * FROM tasks WHERE userId = ? OR userId IS NULL OR userId = ""';
+      params = [userId];
+    }
+    query += ' ORDER BY dueDate ASC, dueTime ASC';
+    const [rows]: any = await pool.query(query, params);
     const tasks = rows.map((row: any) => ({
       ...row,
       ...row.data,
+      userId: row.userId || row.data?.userId,
     }));
     tasks.forEach((t: any) => delete t.data);
     res.json(tasks);
@@ -120,11 +131,11 @@ app.get('/api/tasks', async (req, res) => {
 app.post('/api/tasks', async (req, res) => {
   try {
     const task = req.body;
+    const userId = task.userId || task.studentId || '';
     const data = JSON.stringify(task);
     await pool.query(
-      `INSERT INTO tasks (id, code, courseName, moduleOrDetail, title, description, dueTimeText, dueDate, dueTime, status, priority, progressPercent, timelineSection, category, data) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [task.id, task.code || '', task.courseName || '', task.moduleOrDetail || '', task.title, task.description || '', task.dueTimeText || '', task.dueDate || '', task.dueTime || '', task.status, task.priority, task.progressPercent || 0, task.timelineSection || '', task.category || '', data]
+      `INSERT INTO tasks (id, userId, code, courseName, moduleOrDetail, title, description, dueTimeText, dueDate, dueTime, status, priority, progressPercent, timelineSection, category, data) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,\n      [task.id, userId, task.code || '', task.courseName || '', task.moduleOrDetail || '', task.title, task.description || '', task.dueTimeText || '', task.dueDate || '', task.dueTime || '', task.status, task.priority, task.progressPercent || 0, task.timelineSection || '', task.category || '', data]
     );
     res.json({ success: true });
   } catch (error: any) {

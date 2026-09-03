@@ -16,6 +16,7 @@ export interface Subtask {
 
 export interface AcademicTask {
   id: string;
+  userId?: string;
   code: string; // e.g., 'ING-302', 'HUM-110'
   courseName: string; // e.g., 'Ingeniería de Software'
   moduleOrDetail: string; // e.g., 'Módulo 3: Requisitos'
