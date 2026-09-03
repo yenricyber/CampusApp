@@ -28,13 +28,26 @@ export default function App() {
   const [notificationToast, setNotificationToast] = useState<{ title: string; body: string } | null>(null);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-      setCurrentUser(JSON.parse(savedUser));
-      setCurrentScreen('inicio');
-      setScreenHistory(['inicio']);
+    const savedUserStr = localStorage.getItem('currentUser');
+    let userStudentId = '';
+    if (savedUserStr) {
+      try {
+        const user = JSON.parse(savedUserStr);
+        setCurrentUser(user);
+        userStudentId = user.studentId || user.id || '';
+        setCurrentScreen('inicio');
+        setScreenHistory(['inicio']);
+
+        // Cargar tareas guardadas localmente de inmediato
+        if (userStudentId) {
+          const cached = localStorage.getItem(`campus_tasks_${userStudentId}`);
+          if (cached) {
+            setTasks(JSON.parse(cached));
+          }
+        }
+      } catch (e) {}
     }
-    fetchTasks();
+    fetchTasks(userStudentId);
   }, []);
 
   // Motor de notificaciones en tiempo real (revisa tareas cada 3 segundos)
@@ -88,7 +101,14 @@ export default function App() {
   const handleLoginSuccess = (user: UserProfile) => {
     setCurrentUser(user);
     localStorage.setItem('currentUser', JSON.stringify(user));
-    fetchTasks(user.studentId);
+    const uId = user.studentId || user.id || '';
+    if (uId) {
+      const cached = localStorage.getItem(`campus_tasks_${uId}`);
+      if (cached) {
+        setTasks(JSON.parse(cached));
+      }
+    }
+    fetchTasks(uId);
   };
 
   const handleLogout = () => {
@@ -102,11 +122,23 @@ export default function App() {
   const fetchTasks = async (userStudentId?: string) => {
     try {
       const targetId = userStudentId || currentUser?.studentId || '';
+      if (targetId) {
+        const cached = localStorage.getItem(`campus_tasks_${targetId}`);
+        if (cached) {
+          setTasks(JSON.parse(cached));
+        }
+      }
+
       const url = targetId ? `/api/tasks?userId=${encodeURIComponent(targetId)}` : '/api/tasks';
       const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
-        setTasks(data);
+        if (Array.isArray(data) && data.length > 0) {
+          setTasks(data);
+          if (targetId) {
+            localStorage.setItem(`campus_tasks_${targetId}`, JSON.stringify(data));
+          }
+        }
       }
     } catch (error) {
       console.error('Error fetching tasks:', error);
@@ -132,13 +164,18 @@ export default function App() {
   };
 
   const handleAddTask = async (newTask: AcademicTask) => {
+    const uId = currentUser?.studentId || currentUser?.id || 'guest';
     const taskWithUser: AcademicTask = {
       ...newTask,
-      userId: currentUser?.studentId || currentUser?.id || 'guest',
+      userId: uId,
     };
 
-    // Actualizar estado local inmediatamente (garantiza creacion 100% fluida)
-    setTasks((prev) => [taskWithUser, ...prev]);
+    // Actualizar estado local y LocalStorage inmediatamente para evitar pérdidas al refrescar (F5)
+    setTasks((prev) => {
+      const updated = [taskWithUser, ...prev];
+      localStorage.setItem(`campus_tasks_${uId}`, JSON.stringify(updated));
+      return updated;
+    });
     setSelectedTask(taskWithUser);
 
     try {
@@ -148,12 +185,17 @@ export default function App() {
         body: JSON.stringify(taskWithUser),
       });
     } catch (error) {
-      console.warn('Aviso de sincronización en servidor:', error);
+      console.warn('Aviso de servidor (guardado localmente):', error);
     }
   };
 
   const handleUpdateTask = async (updatedTask: AcademicTask) => {
-    setTasks((prev) => prev.map((t) => (t.id === updatedTask.id ? updatedTask : t)));
+    const uId = currentUser?.studentId || currentUser?.id || 'guest';
+    setTasks((prev) => {
+      const updated = prev.map((t) => (t.id === updatedTask.id ? updatedTask : t));
+      localStorage.setItem(`campus_tasks_${uId}`, JSON.stringify(updated));
+      return updated;
+    });
     setSelectedTask(updatedTask);
     try {
       await fetch(`/api/tasks/${updatedTask.id}`, {
@@ -167,7 +209,12 @@ export default function App() {
   };
 
   const handleDeleteTask = async (taskId: string) => {
-    setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    const uId = currentUser?.studentId || currentUser?.id || 'guest';
+    setTasks((prev) => {
+      const updated = prev.filter((t) => t.id !== taskId);
+      localStorage.setItem(`campus_tasks_${uId}`, JSON.stringify(updated));
+      return updated;
+    });
     if (selectedTask?.id === taskId) {
       setSelectedTask(null);
       navigateBack();
