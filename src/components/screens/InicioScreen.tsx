@@ -70,13 +70,6 @@ export const InicioScreen: React.FC<InicioScreenProps> = ({
               <span className="material-symbols-outlined text-[22px]">notifications_active</span>
             </div>
           </div>
-          <div className="mt-space-md pt-space-xs flex items-center justify-between text-on-primary/90 bg-white/5 rounded-lg px-space-sm py-space-2xs">
-            <div className="flex items-center gap-space-xs">
-              <span className="material-symbols-outlined text-secondary-fixed text-[18px]">bolt</span>
-              <span className="font-label-md text-label-md font-medium">Racha de estudio: 5 días consecutivos</span>
-            </div>
-            <span className="font-label-sm text-label-sm font-semibold text-secondary-fixed">¡Excelente!</span>
-          </div>
         </div>
 
         </div>
