@@ -17,28 +17,42 @@ interface ClassmateUser {
   photo: string;
 }
 
-// Predefined registered classmates in database
+// Real registered classmates from database
 const REGISTERED_CLASSMATES: ClassmateUser[] = [
   {
-    username: 'maria.sanchez',
-    name: 'María Sánchez',
-    program: 'Ingeniería de Software',
-    campus: 'Campus Central',
-    photo: ASSETS.partnerPhoto,
-  },
-  {
-    username: 'carlos.gomez',
-    name: 'Carlos Gómez',
-    program: 'Base de Datos & Sistemas',
-    campus: 'Campus Norte',
+    username: 'juan@universidadlatino.edu.mx',
+    name: 'Juan Pérez',
+    program: 'Mercadotecnia Global',
+    campus: '3º Semestre',
     photo: '',
   },
   {
-    username: 'ana.rodriguez',
-    name: 'Ana Rodríguez',
-    program: 'Redes de Computadoras',
-    campus: 'Campus Central',
-    photo: ASSETS.professorPhoto,
+    username: 'alex@universidad.edu.mx',
+    name: 'Alexander Ramírez Soberanes',
+    program: 'Ingeniería en Sistemas Computacionales',
+    campus: '10º Cuatrimestre',
+    photo: '',
+  },
+  {
+    username: 'david.may@alumno.universidadlatino.edu.mx',
+    name: 'David May',
+    program: 'Ingeniería en Sistemas Computacionales',
+    campus: '10º Cuatrimestre',
+    photo: '',
+  },
+  {
+    username: 'Goku@universidadlatino.edu.mx',
+    name: 'Goku',
+    program: 'Derecho',
+    campus: '3º Semestre',
+    photo: '',
+  },
+  {
+    username: 'yenri.moo@universidadlatino.edu.mx',
+    name: 'Yenri Efrén Moo May',
+    program: 'Ingeniería en Sistemas Computacionales',
+    campus: '10º Cuatrimestre',
+    photo: '',
   },
 ];
 
@@ -56,6 +70,17 @@ export const TrabajoGrupalModal: React.FC<TrabajoGrupalModalProps> = ({
 
   if (!isOpen) return null;
 
+  const formatCleanName = (name: string, studentId: string) => {
+    if (!name || name.includes('@')) {
+      const part = (name || studentId).split('@')[0].replace(/[._]/g, ' ');
+      return part
+        .split(' ')
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+    }
+    return name;
+  };
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     setSearchError(null);
@@ -63,7 +88,7 @@ export const TrabajoGrupalModal: React.FC<TrabajoGrupalModalProps> = ({
     const queryClean = searchQuery.trim().toLowerCase();
 
     if (!queryClean) {
-      setSearchError('Por favor ingresa el usuario, correo o matrícula del compañero.');
+      setSearchError('Por favor ingresa el usuario, nombre o correo del compañero.');
       return;
     }
 
@@ -74,9 +99,10 @@ export const TrabajoGrupalModal: React.FC<TrabajoGrupalModalProps> = ({
         const dbUsers = await res.json();
         if (Array.isArray(dbUsers) && dbUsers.length > 0) {
           const u = dbUsers[0];
+          const cleanName = formatCleanName(u.name, u.studentId);
           setFoundUser({
             username: u.studentId,
-            name: u.name,
+            name: cleanName,
             program: u.program || 'Carrera Académica',
             campus: u.semester || 'Campus Principal',
             photo: u.avatarUrl || '',
@@ -90,12 +116,12 @@ export const TrabajoGrupalModal: React.FC<TrabajoGrupalModalProps> = ({
       console.warn('Aviso de búsqueda backend:', err);
     }
 
-    // 2. Buscar en lista estática
+    // 2. Buscar en lista real de compañeros
     const found = REGISTERED_CLASSMATES.find(
       (u) =>
         u.username.toLowerCase().includes(queryClean) ||
         u.name.toLowerCase().includes(queryClean) ||
-        queryClean.includes(u.username.split('.')[0])
+        queryClean.includes(u.username.split('@')[0])
     );
 
     if (found) {
@@ -105,26 +131,9 @@ export const TrabajoGrupalModal: React.FC<TrabajoGrupalModalProps> = ({
       return;
     }
 
-    // 3. Fallback dinámico con inicial de usuario real (sin imagen de muestra fija)
-    if (queryClean.length >= 3) {
-      const formattedName = queryClean.split('@')[0].replace('.', ' ');
-      const capitalizedName = formattedName
-        .split(' ')
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(' ');
-      setFoundUser({
-        username: queryClean,
-        name: capitalizedName || 'Compañero Registrado',
-        program: 'Carrera Académica',
-        campus: 'Campus Principal',
-        photo: '',
-      });
-      const pendingIds = tasks.filter((t) => t.status !== 'terminada').map((t) => t.id);
-      setSelectedTaskIds(pendingIds);
-    } else {
-      setFoundUser(null);
-      setSearchError('Usuario no encontrado. Asegúrate de ingresar el usuario o correo registrado.');
-    }
+    // Si no se encuentra en la base de datos real:
+    setFoundUser(null);
+    setSearchError('Usuario no encontrado. Solo puedes sincronizar tareas con usuarios reales registrados.');
   };
 
   const toggleTaskSelection = (taskId: string) => {
@@ -277,7 +286,7 @@ export const TrabajoGrupalModal: React.FC<TrabajoGrupalModalProps> = ({
                         </span>
                       </div>
                       <p className="font-body-xs text-body-xs text-on-surface-variant truncate">
-                        {foundUser.program} • {foundUser.campus}
+                        {foundUser.username} • {foundUser.program} • {foundUser.campus}
                       </p>
                     </div>
                   </div>

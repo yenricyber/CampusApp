@@ -101,7 +101,7 @@ export default function App() {
   const handleLoginSuccess = (user: UserProfile) => {
     setCurrentUser(user);
     localStorage.setItem('currentUser', JSON.stringify(user));
-    const uId = user.studentId || user.id || '';
+    const uId = user.studentId || (user as any).id || '';
     if (uId) {
       const cached = localStorage.getItem(`campus_tasks_${uId}`);
       setTasks(cached ? JSON.parse(cached) : []);
