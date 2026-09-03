@@ -3,6 +3,8 @@ import { AcademicTask, ScreenType, UserProfile } from './types';
 import { AppHeader } from './components/AppHeader';
 import { BottomNav } from './components/BottomNav';
 import { ScreenPickerModal } from './components/ScreenPickerModal';
+import { NotificationsModal } from './components/NotificationsModal';
+import { playNotificationChime, sendNativeNotification } from './utils/notifications';
 import { InicioScreen } from './components/screens/InicioScreen';
 import { CalendarioScreen } from './components/screens/CalendarioScreen';
 import { RegistroRapidoScreen } from './components/screens/RegistroRapidoScreen';
@@ -19,6 +21,9 @@ export default function App() {
   const [tasks, setTasks] = useState<AcademicTask[]>([]);
   const [selectedTask, setSelectedTask] = useState<AcademicTask | null>(null);
   const [isScreenPickerOpen, setIsScreenPickerOpen] = useState(false);
+  const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false);
+  const [defaultReminderMinutes, setDefaultReminderMinutes] = useState(10);
+  const [notificationToast, setNotificationToast] = useState<{ title: string; body: string } | null>(null);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('currentUser');
@@ -29,6 +34,38 @@ export default function App() {
     }
     fetchTasks();
   }, []);
+
+  // Motor de notificaciones en tiempo real (revisa tareas cada 8 segundos)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = new Date();
+      tasks.forEach((task) => {
+        if (task.status === 'terminada' || task.notified) return;
+        const dueStr = `${task.dueDate}T${task.dueTime || '23:59'}:00`;
+        const dueDateObj = new Date(dueStr);
+        if (isNaN(dueDateObj.getTime())) return;
+
+        const diffMs = dueDateObj.getTime() - now.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        const leadMins = task.reminderMinutes || defaultReminderMinutes;
+
+        if (diffMins >= 0 && diffMins <= leadMins) {
+          playNotificationChime();
+          sendNativeNotification(
+            `⏰ CampusApp: Entrega Próxima`,
+            `Tu tarea "${task.title}" (${task.courseName}) vence pronto.`
+          );
+          setNotificationToast({
+            title: `⏰ Alarma: ${task.title}`,
+            body: `Vence a las ${task.dueTime} hrs (${task.courseName})`,
+          });
+          setTimeout(() => setNotificationToast(null), 7000);
+          handleUpdateTask({ ...task, notified: true });
+        }
+      });
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [tasks, defaultReminderMinutes]);
 
   const handleLoginSuccess = (user: UserProfile) => {
     setCurrentUser(user);
@@ -160,6 +197,7 @@ export default function App() {
               navigateTo('detalle-tarea');
             }}
             onToggleTaskCompleted={handleToggleTaskCompleted}
+            onOpenNotifications={() => setIsNotificationsModalOpen(true)}
           />
         )}
 
@@ -218,6 +256,35 @@ export default function App() {
       {/* Persistent bottom navigation bar when appropriate */}
       {showBottomNav && currentUser && (
         <BottomNav currentScreen={currentScreen} onNavigate={navigateTo} />
+      )}
+
+      {/* Notifications & Audio Chime Modal */}
+      <NotificationsModal
+        isOpen={isNotificationsModalOpen}
+        onClose={() => setIsNotificationsModalOpen(false)}
+        tasks={tasks}
+        defaultReminderMinutes={defaultReminderMinutes}
+        onChangeDefaultReminder={setDefaultReminderMinutes}
+      />
+
+      {/* Floating In-App Toast Banner Notification */}
+      {notificationToast && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 w-11/12 max-w-md p-4 rounded-xl bg-primary text-on-primary shadow-2xl flex items-center gap-3 animate-bounce border border-white/20">
+          <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+            <span className="material-symbols-outlined text-[24px]">notifications_active</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <h4 className="font-label-md text-label-md font-bold truncate">{notificationToast.title}</h4>
+            <p className="font-body-xs text-body-xs text-on-primary/90 truncate">{notificationToast.body}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setNotificationToast(null)}
+            className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white/20 text-on-primary cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
       )}
 
       {/* Screen Explorer Modal for easy 1-click inspection of all 7 screens */}

@@ -41,6 +41,8 @@ export interface AcademicTask {
   subtasks?: Subtask[];
   timelineSection?: 'hoy' | 'manana' | 'proxima' | 'reciente';
   category?: 'dev' | 'humanities' | 'networks' | 'math' | 'all';
+  reminderMinutes?: number; // Minutes before due date/time to alert (default 10)
+  notified?: boolean; // Flag if reminder chime/notification was already sent
 }
 
 export interface UserProfile {

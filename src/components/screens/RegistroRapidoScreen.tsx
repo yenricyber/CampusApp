@@ -18,6 +18,7 @@ export const RegistroRapidoScreen: React.FC<RegistroRapidoScreenProps> = ({
   const [dueTime, setDueTime] = useState('23:59');
   const [status, setStatus] = useState<'pendiente' | 'en_progreso'>('pendiente');
   const [priority, setPriority] = useState<'baja' | 'media' | 'urgente'>('media');
+  const [reminderMinutes, setReminderMinutes] = useState<number>(10);
   const [attachments, setAttachments] = useState<{ name: string; size: string; type: string }[]>([
     { name: 'Rubrica_Evaluacion_Final.pdf', size: '1.4 MB • Rúbrica oficial', type: 'pdf' },
   ]);
@@ -65,6 +66,7 @@ export const RegistroRapidoScreen: React.FC<RegistroRapidoScreenProps> = ({
       dueTimeText: `${dueDate} • ${dueTime} hrs`,
       status: status,
       priority: priority,
+      reminderMinutes: reminderMinutes,
       urgentBadge: priority === 'urgente' ? '¡Cierra hoy!' : priority === 'media' ? 'Próxima' : 'Normal',
       timeRemaining: 'Programada',
       attachmentsCount: attachments.length,
@@ -221,9 +223,38 @@ export const RegistroRapidoScreen: React.FC<RegistroRapidoScreenProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-space-xs px-3 py-2 rounded-lg bg-surface-container-low text-on-surface-variant">
-              <span className="material-symbols-outlined text-[18px] text-primary">notifications_active</span>
-              <span className="font-label-sm text-label-sm">Se enviará un recordatorio 24h antes del vencimiento</span>
+            {/* Recordatorio Configurable */}
+            <div className="flex flex-col gap-2 pt-1">
+              <label className="font-label-md text-label-md text-on-surface font-semibold flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[18px] text-primary">notifications_active</span>
+                  <span>Aviso de Alarma y Timbre</span>
+                </span>
+                <span className="font-label-sm text-label-sm text-primary font-bold">{reminderMinutes} min antes</span>
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { label: '5 min', value: 5 },
+                  { label: '10 min', value: 10 },
+                  { label: '15 min', value: 15 },
+                  { label: '30 min', value: 30 },
+                  { label: '1 hora', value: 60 },
+                  { label: '1 día', value: 1440 },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setReminderMinutes(opt.value)}
+                    className={`py-2 px-1 rounded-lg font-label-sm text-label-sm font-semibold transition-all cursor-pointer ${
+                      reminderMinutes === opt.value
+                        ? 'bg-primary text-on-primary shadow-xs'
+                        : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container'
+                    }`}
+                  >
+                    {opt.label} antes
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 

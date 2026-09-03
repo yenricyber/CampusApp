@@ -201,6 +201,51 @@ export const DetalleTareaScreen: React.FC<DetalleTareaScreenProps> = ({
           </div>
         </div>
 
+        {/* Configuración de Notificación y Alarma */}
+        <div className="px-margin-mobile mb-space-sm">
+          <div className="bg-surface-container-lowest rounded-xl p-space-md shadow-xs flex flex-col gap-2 border border-surface-container">
+            <div className="flex items-center justify-between">
+              <span className="font-label-md text-label-md font-bold text-on-surface flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[18px] text-primary">notifications_active</span>
+                Alarma y Timbre de Recordatorio
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full bg-primary-container text-on-primary font-label-xs text-label-xs font-bold">
+                {task.reminderMinutes || 10} min antes
+              </span>
+            </div>
+            <p className="font-body-xs text-body-xs text-on-surface-variant">
+              Cambia la anticipación con la que sonará la campana de aviso para esta entrega:
+            </p>
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 pt-1">
+              {[
+                { label: '5 min', value: 5 },
+                { label: '10 min', value: 10 },
+                { label: '15 min', value: 15 },
+                { label: '30 min', value: 30 },
+                { label: '1 hora', value: 60 },
+                { label: '1 día', value: 1440 },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    const updated = { ...task, reminderMinutes: opt.value, notified: false };
+                    onUpdateTask(updated);
+                    showToast(`Recordatorio ajustado a ${opt.label} antes`);
+                  }}
+                  className={`py-1.5 px-1 rounded-lg font-label-xs text-label-xs font-semibold transition-all cursor-pointer text-center ${
+                    (task.reminderMinutes || 10) === opt.value
+                      ? 'bg-primary text-on-primary shadow-xs'
+                      : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* Professor & Academic Context Details */}
         <div className="px-margin-mobile mb-space-sm">
           <div className="bg-surface-container-lowest rounded-xl p-space-md shadow-xs flex items-center justify-between gap-space-sm border border-surface-container">

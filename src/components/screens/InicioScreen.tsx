@@ -8,6 +8,7 @@ interface InicioScreenProps {
   onNavigate: (screen: ScreenType) => void;
   onSelectTask: (task: AcademicTask) => void;
   onToggleTaskCompleted: (taskId: string) => void;
+  onOpenNotifications?: () => void;
 }
 
 export const InicioScreen: React.FC<InicioScreenProps> = ({
@@ -16,6 +17,7 @@ export const InicioScreen: React.FC<InicioScreenProps> = ({
   onNavigate,
   onSelectTask,
   onToggleTaskCompleted,
+  onOpenNotifications,
 }) => {
   const [filterCategory, setFilterCategory] = useState<'all' | 'urgent' | 'pending' | 'done' | 'math' | 'dev'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -66,9 +68,13 @@ export const InicioScreen: React.FC<InicioScreenProps> = ({
                 {currentUser.program}
               </p>
             </div>
-            <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-xs flex items-center justify-center text-on-primary">
+            <button
+              type="button"
+              onClick={onOpenNotifications}
+              className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-xs flex items-center justify-center text-on-primary cursor-pointer hover:bg-white/20 transition-all"
+            >
               <span className="material-symbols-outlined text-[22px]">notifications_active</span>
-            </div>
+            </button>
           </div>
         </div>
 
@@ -77,43 +83,64 @@ export const InicioScreen: React.FC<InicioScreenProps> = ({
         {/* Quick Stats Overview Grid */}
         <div className="grid grid-cols-3 gap-space-xs md:gap-space-lg">
           {/* Stat 1: Por vencer */}
-          <div className="flex flex-col p-space-sm rounded-xl bg-secondary-fixed/30 text-on-secondary-fixed shadow-xs">
+          <button
+            type="button"
+            onClick={() => setFilterCategory(filterCategory === 'urgent' ? 'all' : 'urgent')}
+            className={`flex flex-col p-space-sm rounded-xl text-left transition-all cursor-pointer shadow-xs border ${'bg-secondary-fixed/30 text-on-secondary-fixed border-secondary/20 hover:scale-[1.02] active:scale-95'} ${
+              filterCategory === 'urgent' ? 'ring-2 ring-secondary font-bold bg-secondary-fixed/60 shadow-sm' : ''
+            }`}
+          >
             <div className="flex items-center justify-between">
               <span className="w-7 h-7 rounded-full bg-secondary-container/20 flex items-center justify-center text-secondary">
                 <span className="material-symbols-outlined text-[16px]">hourglass_top</span>
               </span>
-              <span className="font-headline-md text-headline-md font-bold text-secondary">{urgentCount || 2}</span>
+              <span className="font-headline-md text-headline-md font-bold text-secondary">{urgentCount}</span>
             </div>
-            <span className="font-label-sm text-label-sm text-on-secondary-fixed-variant font-medium mt-space-xs leading-tight">
-              Por vencer
+            <span className="font-label-sm text-label-sm text-on-secondary-fixed-variant font-medium mt-space-xs leading-tight flex items-center justify-between">
+              <span>Por vencer</span>
+              {filterCategory === 'urgent' && <span className="text-[10px] uppercase font-bold text-secondary">Activo</span>}
             </span>
-          </div>
+          </button>
 
           {/* Stat 2: Pendientes */}
-          <div className="flex flex-col p-space-sm rounded-xl bg-surface-container text-on-surface shadow-xs">
+          <button
+            type="button"
+            onClick={() => setFilterCategory(filterCategory === 'pending' ? 'all' : 'pending')}
+            className={`flex flex-col p-space-sm rounded-xl text-left transition-all cursor-pointer shadow-xs border ${'bg-surface-container text-on-surface border-primary/10 hover:scale-[1.02] active:scale-95'} ${
+              filterCategory === 'pending' ? 'ring-2 ring-primary font-bold bg-primary-container/20 shadow-sm' : ''
+            }`}
+          >
             <div className="flex items-center justify-between">
               <span className="w-7 h-7 rounded-full bg-primary-fixed flex items-center justify-center text-primary">
                 <span className="material-symbols-outlined text-[16px]">pending_actions</span>
               </span>
-              <span className="font-headline-md text-headline-md font-bold text-primary">{pendingCount || 5}</span>
+              <span className="font-headline-md text-headline-md font-bold text-primary">{pendingCount}</span>
             </div>
-            <span className="font-label-sm text-label-sm text-on-surface-variant font-medium mt-space-xs leading-tight">
-              Pendientes
+            <span className="font-label-sm text-label-sm text-on-surface-variant font-medium mt-space-xs leading-tight flex items-center justify-between">
+              <span>Pendientes</span>
+              {filterCategory === 'pending' && <span className="text-[10px] uppercase font-bold text-primary">Activo</span>}
             </span>
-          </div>
+          </button>
 
           {/* Stat 3: Completas */}
-          <div className="flex flex-col p-space-sm rounded-xl bg-surface-container-low text-tertiary-container shadow-xs">
+          <button
+            type="button"
+            onClick={() => setFilterCategory(filterCategory === 'done' ? 'all' : 'done')}
+            className={`flex flex-col p-space-sm rounded-xl text-left transition-all cursor-pointer shadow-xs border ${'bg-surface-container-low text-tertiary-container border-tertiary/20 hover:scale-[1.02] active:scale-95'} ${
+              filterCategory === 'done' ? 'ring-2 ring-tertiary font-bold bg-tertiary-container/30 shadow-sm' : ''
+            }`}
+          >
             <div className="flex items-center justify-between">
               <span className="w-7 h-7 rounded-full bg-tertiary-fixed-dim/40 flex items-center justify-center text-tertiary">
                 <span className="material-symbols-outlined text-[16px]">task_alt</span>
               </span>
-              <span className="font-headline-md text-headline-md font-bold text-tertiary">{completedCount || 14}</span>
+              <span className="font-headline-md text-headline-md font-bold text-tertiary">{completedCount}</span>
             </div>
-            <span className="font-label-sm text-label-sm text-on-tertiary-fixed-variant font-medium mt-space-xs leading-tight">
-              Completas
+            <span className="font-label-sm text-label-sm text-on-tertiary-fixed-variant font-medium mt-space-xs leading-tight flex items-center justify-between">
+              <span>Completas</span>
+              {filterCategory === 'done' && <span className="text-[10px] uppercase font-bold text-tertiary">Activo</span>}
             </span>
-          </div>
+          </button>
         </div>
 
         {/* Search & Filter Controls */}
