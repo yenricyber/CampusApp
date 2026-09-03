@@ -111,7 +111,7 @@ app.get('/api/tasks', async (req, res) => {
     let query = 'SELECT * FROM tasks';
     let params: any[] = [];
     if (userId) {
-      query = 'SELECT * FROM tasks WHERE userId = ? OR userId IS NULL OR userId = ""';
+      query = 'SELECT * FROM tasks WHERE userId = ?';
       params = [userId];
     }
     query += ' ORDER BY dueDate ASC, dueTime ASC';
