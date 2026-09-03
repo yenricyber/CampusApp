@@ -38,7 +38,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
   return (
     <header className="fixed top-0 inset-x-0 z-50 bg-surface/80 backdrop-blur-xl border-b border-surface-container shadow-xs">
-      <div className="h-16 px-margin-mobile flex items-center justify-between gap-space-sm w-full mx-auto">
+      <div className="h-16 px-4 md:px-8 max-w-7xl flex items-center justify-between gap-space-sm w-full mx-auto">
         {/* Left Side */}
         {isSubScreen ? (
           <div className="flex items-center gap-space-xs min-w-0">
