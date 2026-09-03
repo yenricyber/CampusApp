@@ -39,7 +39,7 @@ export const PerfilScreen: React.FC<PerfilScreenProps> = ({
 
   return (
     <main className="flex flex-col relative w-full pt-16 pb-24 bg-surface min-h-screen">
-      <div className="flex flex-col w-full px-margin-mobile pt-space-md max-w-md mx-auto gap-space-lg">
+      <div className="flex flex-col w-full px-margin-mobile pt-space-md max-w-2xl mx-auto gap-space-lg md:bg-surface-container-lowest md:p-8 md:rounded-2xl md:shadow-xl md:border md:border-surface-container md:my-8">
         
         {/* Profile Card */}
         <div className="bg-surface-container-lowest rounded-xl shadow-xs p-space-lg flex flex-col items-center gap-space-md">

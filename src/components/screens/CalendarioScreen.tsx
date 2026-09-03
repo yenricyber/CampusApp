@@ -33,8 +33,8 @@ export const CalendarioScreen: React.FC<CalendarioScreenProps> = ({
 
   return (
     <main className="flex flex-col relative w-full pt-16 pb-24 bg-surface min-h-screen">
-      <div className="flex flex-col w-full px-margin-mobile pb-space-3xl gap-space-lg max-w-md mx-auto pt-3">
-        {/* Month & View Selector Header Card */}
+      <div className="flex flex-col w-full px-margin-mobile pb-space-3xl gap-space-lg max-w-5xl mx-auto pt-3">
+        {/* Week Calendar Picker Ribbon */}
         <div className="flex flex-col bg-surface-container-lowest rounded-xl shadow-xs p-space-md gap-space-md">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-space-xs">

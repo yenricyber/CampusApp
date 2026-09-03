@@ -45,8 +45,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigate, onLoginSuc
   };
 
   return (
-    <main className="flex flex-col relative w-full pt-16 pb-24 bg-surface min-h-screen">
-      <div className="flex flex-col w-full px-margin-mobile pb-space-2xl max-w-md mx-auto pt-2">
+    <main className="flex flex-col relative w-full pt-16 pb-24 bg-surface min-h-screen justify-center">
+      <div className="flex flex-col w-full px-margin-mobile md:px-space-2xl pb-space-2xl max-w-md mx-auto pt-2 md:bg-surface-container-lowest md:py-8 md:rounded-2xl md:shadow-xl md:border md:border-surface-container md:my-8">
         {/* Brand and Title Header */}
         <div className="flex flex-col items-center text-center mt-space-md mb-space-xl">
           <div className="relative w-20 h-20 rounded-xl bg-surface-container shadow-md flex items-center justify-center p-space-xs mb-space-md">

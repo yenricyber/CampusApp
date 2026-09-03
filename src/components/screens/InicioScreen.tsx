@@ -54,7 +54,8 @@ export const InicioScreen: React.FC<InicioScreenProps> = ({
 
   return (
     <main className="flex flex-col relative w-full pt-16 pb-24 bg-surface min-h-screen">
-      <div className="flex flex-col w-full px-margin-mobile pb-space-3xl space-y-space-lg max-w-md mx-auto pt-3">
+      <div className="flex flex-col w-full px-margin-mobile md:px-space-2xl pb-space-3xl space-y-space-lg mx-auto pt-3">
+        <div className="max-w-3xl">
         {/* Greeting & Semester Banner */}
         <div className="relative overflow-hidden rounded-xl bg-primary-container text-on-primary p-space-md shadow-md">
           <div className="absolute -right-6 -bottom-6 w-32 h-32 rounded-full bg-primary-fixed/10 pointer-events-none blur-xl"></div>
@@ -78,8 +79,10 @@ export const InicioScreen: React.FC<InicioScreenProps> = ({
           </div>
         </div>
 
+        </div>
+
         {/* Quick Stats Overview Grid */}
-        <div className="grid grid-cols-3 gap-space-xs">
+        <div className="grid grid-cols-3 gap-space-xs md:gap-space-lg">
           {/* Stat 1: Por vencer */}
           <div className="flex flex-col p-space-sm rounded-xl bg-secondary-fixed/30 text-on-secondary-fixed shadow-xs">
             <div className="flex items-center justify-between">
@@ -196,7 +199,7 @@ export const InicioScreen: React.FC<InicioScreenProps> = ({
           </div>
 
           {/* Task Cards Stream */}
-          <div className="space-y-space-sm" id="tasks-container">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-sm" id="tasks-container">
             {filteredTasks.map((task) => {
               const isUrgent = task.priority === 'urgente';
               const isCompleted = task.status === 'terminada';
@@ -208,7 +211,7 @@ export const InicioScreen: React.FC<InicioScreenProps> = ({
                     onSelectTask(task);
                     onNavigate('detalle-tarea');
                   }}
-                  className={`task-item relative rounded-xl bg-surface-container-lowest p-space-md shadow-xs hover:shadow-md transition-all flex flex-col space-y-space-xs cursor-pointer ${
+                  className={`task-item relative rounded-xl bg-surface-container-lowest p-space-md shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-space-xs cursor-pointer ${
                     isCompleted ? 'opacity-85' : ''
                   }`}
                 >

@@ -83,10 +83,10 @@ export const DetalleTareaScreen: React.FC<DetalleTareaScreenProps> = ({
   };
 
   return (
-    <main className="flex flex-col relative w-full pt-16 pb-safe bg-surface min-h-screen">
-      <div className="flex flex-col w-full pb-28 max-w-md mx-auto pt-2">
-        {/* Top Academic Context Ribbon */}
-        <div className="px-margin-mobile pt-space-sm pb-space-xs flex flex-col gap-space-2xs">
+    <main className="flex flex-col relative w-full pt-16 pb-24 bg-surface min-h-screen">
+      <div className="flex flex-col w-full pb-28 max-w-2xl mx-auto px-margin-mobile pt-2">
+        {/* Header Breadcrumb / Course */}
+        <div className="pt-space-sm pb-space-xs flex flex-col gap-space-2xs">
           <div className="flex items-center justify-between gap-space-xs">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary font-label-sm text-label-sm tracking-wider uppercase font-semibold">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>

@@ -74,8 +74,8 @@ export const RegistroScreen: React.FC<RegistroScreenProps> = ({ onNavigate, onLo
   };
 
   return (
-    <main className="flex flex-col relative w-full pt-16 pb-24 bg-surface min-h-screen">
-      <div className="flex flex-col w-full px-margin-mobile pb-space-3xl max-w-md mx-auto">
+    <main className="flex flex-col relative w-full pt-16 pb-24 bg-surface min-h-screen justify-center">
+      <div className="flex flex-col w-full px-margin-mobile md:px-space-2xl pb-space-3xl max-w-md mx-auto md:bg-surface-container-lowest md:py-8 md:rounded-2xl md:shadow-xl md:border md:border-surface-container md:my-8">
         {/* Academic Welcome Hero / Header Card */}
         <div className="relative overflow-hidden bg-primary-container text-on-primary rounded-xl p-space-lg shadow-md mt-space-sm mb-space-lg">
           <div className="absolute -right-6 -bottom-6 w-32 h-32 rounded-full bg-surface-variant/10 pointer-events-none blur-xl"></div>

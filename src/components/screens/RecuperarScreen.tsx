@@ -22,8 +22,8 @@ export const RecuperarScreen: React.FC<RecuperarScreenProps> = ({ onNavigate }) 
   };
 
   return (
-    <main className="flex flex-col relative w-full pt-16 pb-24 bg-surface min-h-screen">
-      <div className="flex flex-col w-full px-margin-mobile pb-space-3xl max-w-md mx-auto">
+    <main className="flex flex-col relative w-full pt-16 pb-24 bg-surface min-h-screen justify-center">
+      <div className="flex flex-col w-full px-margin-mobile md:px-space-2xl pb-space-3xl max-w-md mx-auto md:bg-surface-container-lowest md:py-8 md:rounded-2xl md:shadow-xl md:border md:border-surface-container md:my-8">
         {/* Top Bar Back Action */}
         <div className="flex items-center justify-between py-space-sm">
           <button
