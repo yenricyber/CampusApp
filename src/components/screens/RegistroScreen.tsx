@@ -39,6 +39,23 @@ export const RegistroScreen: React.FC<RegistroScreenProps> = ({ onNavigate, onLo
   const hasEdu = studentId.includes('@') && studentId.includes('.edu');
   const passwordsMatch = password.length > 0 && password === confirmPassword;
 
+  // Indicadores dinámicos de contraseña
+  const hasMinLength = password.length >= 8;
+  const hasUpper = /[A-Z]/.test(password);
+  const hasNumberOrSymbol = /[0-9]/.test(password) || /[^A-Za-z0-9]/.test(password);
+
+  const score = [hasMinLength, hasUpper, hasNumberOrSymbol, password.length >= 10].filter(Boolean).length;
+
+  const getStrengthInfo = () => {
+    if (!password) return { label: 'Sin ingresar', color: 'text-outline', bars: 0, barBg: 'bg-surface-container-highest' };
+    if (score <= 1) return { label: 'Débil', color: 'text-error', bars: 1, barBg: 'bg-error' };
+    if (score === 2) return { label: 'Media', color: 'text-amber-600', bars: 2, barBg: 'bg-amber-500' };
+    if (score === 3) return { label: 'Buena', color: 'text-blue-600', bars: 3, barBg: 'bg-blue-500' };
+    return { label: 'Excelente', color: 'text-emerald-600', bars: 4, barBg: 'bg-emerald-500' };
+  };
+
+  const strength = getStrengthInfo();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!acceptTerms || !passwordsMatch) return;
@@ -323,20 +340,44 @@ export const RegistroScreen: React.FC<RegistroScreenProps> = ({ onNavigate, onLo
               </div>
 
               {/* Indicador Dinámico de Fortaleza */}
-              <div className="mt-space-xs bg-surface-container-low p-space-xs rounded-lg flex flex-col gap-1.5">
+              <div className="mt-space-xs bg-surface-container-low p-space-xs px-space-sm rounded-lg flex flex-col gap-2 border border-surface-container/60">
                 <div className="flex items-center justify-between">
                   <span className="font-label-sm text-label-sm text-on-surface-variant">Nivel de seguridad:</span>
-                  <span className="font-label-sm text-label-sm font-semibold text-secondary">Media</span>
+                  <span className={`font-label-sm text-label-sm font-bold transition-colors ${strength.color}`}>
+                    {strength.label}
+                  </span>
                 </div>
-                <div className="w-full grid grid-cols-4 gap-1 h-1.5">
-                  <div className="rounded-full bg-secondary transition-all"></div>
-                  <div className="rounded-full bg-secondary transition-all"></div>
-                  <div className="rounded-full bg-surface-container-highest transition-all"></div>
-                  <div className="rounded-full bg-surface-container-highest transition-all"></div>
+
+                <div className="w-full grid grid-cols-4 gap-1.5 h-1.5">
+                  {[1, 2, 3, 4].map((barIndex) => (
+                    <div
+                      key={barIndex}
+                      className={`rounded-full transition-all duration-300 ${
+                        barIndex <= strength.bars ? strength.barBg : 'bg-surface-container-highest'
+                      }`}
+                    ></div>
+                  ))}
                 </div>
-                <div className="flex items-center gap-1.5 text-on-surface-variant font-label-sm text-label-sm pt-0.5">
-                  <span className="material-symbols-outlined text-[13px] text-outline">check</span>
-                  <span>Usa 8+ caracteres, mayúsculas y un número o símbolo.</span>
+
+                <div className="flex flex-col gap-1 pt-1">
+                  <div className={`flex items-center gap-1.5 font-label-sm text-label-sm transition-colors ${hasMinLength ? 'text-emerald-600 font-medium' : 'text-outline'}`}>
+                    <span className="material-symbols-outlined text-[15px]">
+                      {hasMinLength ? 'check_circle' : 'cancel'}
+                    </span>
+                    <span>Mínimo 8 caracteres</span>
+                  </div>
+                  <div className={`flex items-center gap-1.5 font-label-sm text-label-sm transition-colors ${hasUpper ? 'text-emerald-600 font-medium' : 'text-outline'}`}>
+                    <span className="material-symbols-outlined text-[15px]">
+                      {hasUpper ? 'check_circle' : 'cancel'}
+                    </span>
+                    <span>Al menos una letra mayúscula</span>
+                  </div>
+                  <div className={`flex items-center gap-1.5 font-label-sm text-label-sm transition-colors ${hasNumberOrSymbol ? 'text-emerald-600 font-medium' : 'text-outline'}`}>
+                    <span className="material-symbols-outlined text-[15px]">
+                      {hasNumberOrSymbol ? 'check_circle' : 'cancel'}
+                    </span>
+                    <span>Al menos un número o símbolo</span>
+                  </div>
                 </div>
               </div>
             </div>
