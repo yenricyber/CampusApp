@@ -239,13 +239,13 @@ export const RegistroScreen: React.FC<RegistroScreenProps> = ({ onNavigate, onLo
                   className="w-full h-12 pl-10 pr-10 rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-1 focus:ring-primary appearance-none transition-all cursor-pointer"
                 >
                   <option value="">Selecciona tu programa académico</option>
-                  <option value="Derecho (RVOE 1275)">Derecho (RVOE 1275)</option>
-                  <option value="Enfermería (RVOE 2048)">Enfermería (RVOE 2048)</option>
-                  <option value="Gastronomía (RVOE 1507)">Gastronomía (RVOE 1507)</option>
-                  <option value="Nutrición (RVOE 1155)">Nutrición (RVOE 1155)</option>
-                  <option value="Psicología (RVOE 994)">Psicología (RVOE 994)</option>
-                  <option value="Negocios Internacionales (RVOE 809)">Negocios Internacionales (RVOE 809)</option>
-                  <option value="Ventas y Mercadotecnia (RVOE 1828)">Ventas y Mercadotecnia (RVOE 1828)</option>
+                  <option value="Derecho">Derecho</option>
+                  <option value="Enfermería">Enfermería</option>
+                  <option value="Gastronomía">Gastronomía</option>
+                  <option value="Nutrición">Nutrición</option>
+                  <option value="Psicología">Psicología</option>
+                  <option value="Negocios Internacionales">Negocios Internacionales</option>
+                  <option value="Ventas y Mercadotecnia">Ventas y Mercadotecnia</option>
                   <option value="Ingeniería en Sistemas Computacionales">Ingeniería en Sistemas Computacionales</option>
                   <option value="Mercadotecnia Global">Mercadotecnia Global</option>
                 </select>
