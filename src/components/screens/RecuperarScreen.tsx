@@ -178,7 +178,6 @@ export const RecuperarScreen: React.FC<RecuperarScreenProps> = ({ onNavigate }) 
             <span className="material-symbols-outlined text-[18px]">arrow_back</span>
             <span>Volver a Iniciar Sesión</span>
           </button>
-          <span className="font-label-sm text-label-sm text-outline">CampusApp Academic Platform © 2025</span>
         </div>
       </div>
     </main>
