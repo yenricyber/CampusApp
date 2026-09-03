@@ -132,10 +132,10 @@ app.post('/api/tasks', async (req, res) => {
   try {
     const task = req.body;
     const userId = task.userId || task.studentId || '';
-    const data = JSON.stringify(task);
     await pool.query(
       `INSERT INTO tasks (id, userId, code, courseName, moduleOrDetail, title, description, dueTimeText, dueDate, dueTime, status, priority, progressPercent, timelineSection, category, data) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,\n      [task.id, userId, task.code || '', task.courseName || '', task.moduleOrDetail || '', task.title, task.description || '', task.dueTimeText || '', task.dueDate || '', task.dueTime || '', task.status, task.priority, task.progressPercent || 0, task.timelineSection || '', task.category || '', data]
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [task.id, userId, task.code || '', task.courseName || '', task.moduleOrDetail || '', task.title, task.description || '', task.dueTimeText || '', task.dueDate || '', task.dueTime || '', task.status, task.priority, task.progressPercent || 0, task.timelineSection || '', task.category || '', data]
     );
     res.json({ success: true });
   } catch (error: any) {
