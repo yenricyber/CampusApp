@@ -409,24 +409,6 @@ export const RegistroRapidoScreen: React.FC<RegistroRapidoScreenProps> = ({
             </div>
           </div>
 
-          {/* Visual Academic Snapshot Card */}
-          <div className="rounded-xl overflow-hidden bg-surface-container-lowest shadow-xs flex flex-col">
-            <div
-              className="relative h-28 w-full bg-cover bg-center"
-              style={{ backgroundImage: `url('${ASSETS.studyDeskRegistro}')` }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-surface-container-lowest/40 to-transparent"></div>
-              <div className="absolute bottom-3 left-4 flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary text-[20px]">lightbulb</span>
-                <span className="font-label-sm text-label-sm text-on-surface font-semibold">Consejo de estudio</span>
-              </div>
-            </div>
-            <div className="px-space-md pb-space-md pt-1">
-              <p className="font-body-sm text-body-sm text-on-surface-variant">
-                Dividir tus tareas grandes en fases incrementales reduce los picos de estrés y mejora tu rendimiento promedio.
-              </p>
-            </div>
-          </div>
 
           {/* Action Buttons */}
           <div className="flex flex-col gap-space-sm pt-space-xs">
