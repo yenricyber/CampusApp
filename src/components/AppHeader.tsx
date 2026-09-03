@@ -103,22 +103,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
         {/* Right Action / Profile area */}
         <div className="flex items-center gap-space-xs">
-          {!isSubScreen && getSectionLabel() && (
-            <span className="font-label-md text-label-md text-on-surface-variant font-medium hidden sm:inline-block">
-              {getSectionLabel()}
-            </span>
-          )}
-
-          {/* Screen switcher trigger pill */}
-          <button
-            type="button"
-            onClick={onOpenScreenPicker}
-            title="Ver todas las 7 pantallas"
-            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-low border border-surface-container text-primary hover:bg-surface-container active:scale-95 transition-all text-xs font-semibold shadow-xs"
-          >
-            <span className="material-symbols-outlined text-[16px]">layers</span>
-            <span className="hidden sm:inline">Pantallas (7)</span>
-          </button>
 
           {/* Profile avatar button */}
           <button
@@ -131,7 +115,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               }
             }}
             className="w-11 h-11 flex items-center justify-center rounded-full p-space-2xs focus:outline-none hover:bg-surface-container transition-colors"
-            title={currentUser ? "Cerrar sesión" : "Perfil / Iniciar Sesión"}
+            title={currentUser ? "Mi Perfil" : "Iniciar Sesión"}
           >
             <img
               alt="Profile"
