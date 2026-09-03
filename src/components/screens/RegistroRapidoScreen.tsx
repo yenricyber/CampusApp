@@ -12,7 +12,7 @@ export const RegistroRapidoScreen: React.FC<RegistroRapidoScreenProps> = ({
   onAddTask,
 }) => {
   const [title, setTitle] = useState('');
-  const [course, setCourse] = useState('is');
+  const [courseName, setCourseName] = useState('Ingeniería de Software');
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState('2025-10-24');
   const [dueTime, setDueTime] = useState('23:59');
@@ -45,19 +45,13 @@ export const RegistroRapidoScreen: React.FC<RegistroRapidoScreenProps> = ({
     e.preventDefault();
     if (!title.trim()) return;
 
-    const courseMap: Record<string, { code: string; name: string }> = {
-      is: { code: 'INF-402', name: 'Ingeniería de Software' },
-      bd: { code: 'INF-310', name: 'Base de Datos' },
-      redes: { code: 'TEL-205', name: 'Redes de Computadoras' },
-      calc: { code: 'MAT-103', name: 'Cálculo Avanzado' },
-    };
-
-    const sel = courseMap[course] || { code: 'INF-402', name: 'Ingeniería de Software' };
+    const finalCourseName = courseName.trim() || 'Materia General';
+    const generatedCode = finalCourseName.slice(0, 3).toUpperCase() + '-101';
 
     const newTask: AcademicTask = {
       id: `task-${Date.now()}`,
-      code: sel.code,
-      courseName: sel.name,
+      code: generatedCode,
+      courseName: finalCourseName,
       moduleOrDetail: 'Módulo académico',
       title: title,
       description: description || 'Sin descripción adicional.',
@@ -142,27 +136,35 @@ export const RegistroRapidoScreen: React.FC<RegistroRapidoScreenProps> = ({
               </div>
             </div>
 
-            {/* Materia / Asignatura Selector */}
+            {/* Materia / Asignatura Input (Escritura Libre) */}
             <div className="flex flex-col gap-1.5">
-              <label className="font-label-md text-label-md text-on-surface" htmlFor="course-select">
+              <label className="font-label-md text-label-md text-on-surface" htmlFor="course-input">
                 Materia / Asignatura <span className="text-error">*</span>
               </label>
               <div className="relative flex items-center">
-                <select
-                  id="course-select"
+                <input
+                  id="course-input"
+                  type="text"
                   required
-                  value={course}
-                  onChange={(e) => setCourse(e.target.value)}
-                  className="w-full h-12 appearance-none px-space-md pr-10 rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-1 focus:ring-primary transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)] cursor-pointer"
-                >
-                  <option value="is">Ingeniería de Software (INF-402)</option>
-                  <option value="bd">Base de Datos (INF-310)</option>
-                  <option value="redes">Redes de Computadoras (TEL-205)</option>
-                  <option value="calc">Cálculo Avanzado (MAT-103)</option>
-                </select>
-                <span className="material-symbols-outlined pointer-events-none absolute right-3 text-on-surface-variant text-[20px]">
-                  expand_more
-                </span>
+                  value={courseName}
+                  onChange={(e) => setCourseName(e.target.value)}
+                  placeholder="Escribe el nombre de tu materia o asignatura..."
+                  className="w-full h-12 px-space-md rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md placeholder:text-outline focus:bg-surface-container-lowest focus:outline-none focus:ring-1 focus:ring-primary transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)]"
+                />
+              </div>
+              {/* Sugerencias de escritura rápida */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pt-1 no-scrollbar">
+                <span className="font-label-xs text-label-xs text-outline shrink-0">Sugerencias:</span>
+                {['Ingeniería de Software', 'Base de Datos', 'Redes de Computadoras', 'Cálculo Avanzado', 'Física', 'Programación Web'].map((sug) => (
+                  <button
+                    key={sug}
+                    type="button"
+                    onClick={() => setCourseName(sug)}
+                    className="px-2.5 py-0.5 rounded-full bg-surface-container-high hover:bg-primary/10 hover:text-primary text-on-surface-variant font-label-xs text-label-xs transition-colors shrink-0 cursor-pointer"
+                  >
+                    {sug}
+                  </button>
+                ))}
               </div>
             </div>
 
