@@ -11,11 +11,20 @@ export const RegistroRapidoScreen: React.FC<RegistroRapidoScreenProps> = ({
   onNavigate,
   onAddTask,
 }) => {
+  const getTodayDateStr = () => new Date().toISOString().split('T')[0];
+  const getFutureTimeStr = () => {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() + 15);
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    return `${hh}:${mm}`;
+  };
+
   const [title, setTitle] = useState('');
   const [courseName, setCourseName] = useState('Ingeniería de Software');
   const [description, setDescription] = useState('');
-  const [dueDate, setDueDate] = useState('2025-10-24');
-  const [dueTime, setDueTime] = useState('23:59');
+  const [dueDate, setDueDate] = useState(getTodayDateStr());
+  const [dueTime, setDueTime] = useState(getFutureTimeStr());
   const [status, setStatus] = useState<'pendiente' | 'en_progreso'>('pendiente');
   const [priority, setPriority] = useState<'baja' | 'media' | 'urgente'>('media');
   const [reminderMinutes, setReminderMinutes] = useState<number>(10);

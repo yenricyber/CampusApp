@@ -35,35 +35,51 @@ export default function App() {
     fetchTasks();
   }, []);
 
-  // Motor de notificaciones en tiempo real (revisa tareas cada 8 segundos)
+  // Motor de notificaciones en tiempo real (revisa tareas cada 3 segundos)
   useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date();
       tasks.forEach((task) => {
         if (task.status === 'terminada' || task.notified) return;
-        const dueStr = `${task.dueDate}T${task.dueTime || '23:59'}:00`;
-        const dueDateObj = new Date(dueStr);
-        if (isNaN(dueDateObj.getTime())) return;
+        if (!task.dueDate || !task.dueTime) return;
 
-        const diffMs = dueDateObj.getTime() - now.getTime();
+        const parts = task.dueDate.split('-');
+        const timeParts = task.dueTime.split(':');
+        if (parts.length < 3 || timeParts.length < 2) return;
+
+        const y = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10) - 1;
+        const d = parseInt(parts[2], 10);
+        const hh = parseInt(timeParts[0], 10);
+        const mm = parseInt(timeParts[1], 10);
+
+        const taskTime = new Date(y, m, d, hh, mm, 0);
+        if (isNaN(taskTime.getTime())) return;
+
+        const diffMs = taskTime.getTime() - now.getTime();
         const diffMins = Math.floor(diffMs / 60000);
-        const leadMins = task.reminderMinutes || defaultReminderMinutes;
+        const leadMins = task.reminderMinutes !== undefined ? task.reminderMinutes : defaultReminderMinutes;
 
-        if (diffMins >= 0 && diffMins <= leadMins) {
+        // Disparar alarma si faltan <= leadMins minutos
+        if (diffMins <= leadMins && diffMins >= -60) {
           playNotificationChime();
           sendNativeNotification(
-            `⏰ CampusApp: Entrega Próxima`,
-            `Tu tarea "${task.title}" (${task.courseName}) vence pronto.`
+            `🔔 ALARMA: Entrega en ${leadMins} min`,
+            `"${task.title}" (${task.courseName}) vence a las ${task.dueTime} hrs.`
           );
           setNotificationToast({
-            title: `⏰ Alarma: ${task.title}`,
-            body: `Vence a las ${task.dueTime} hrs (${task.courseName})`,
+            title: `🔔 ALARMA: ${task.title}`,
+            body: `Vence a las ${task.dueTime} hrs (${task.courseName}) — Avisado ${leadMins} min antes`,
           });
-          setTimeout(() => setNotificationToast(null), 7000);
-          handleUpdateTask({ ...task, notified: true });
+          setTimeout(() => setNotificationToast(null), 10000);
+
+          // Actualizar estado local inmediatamente para evitar duplicados
+          setTasks((prev) =>
+            prev.map((t) => (t.id === task.id ? { ...t, notified: true } : t))
+          );
         }
       });
-    }, 8000);
+    }, 3000);
     return () => clearInterval(interval);
   }, [tasks, defaultReminderMinutes]);
 
