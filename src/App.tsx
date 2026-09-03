@@ -205,6 +205,14 @@ export default function App() {
         {currentScreen === 'recuperar' && (
           <RecuperarScreen onNavigate={navigateTo} />
         )}
+
+        {currentScreen === 'perfil' && currentUser && (
+          <PerfilScreen
+            currentUser={currentUser}
+            onNavigate={navigateTo}
+            onLogout={handleLogout}
+          />
+        )}
       </div>
 
       {/* Persistent bottom navigation bar when appropriate */}
