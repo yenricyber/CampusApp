@@ -191,28 +191,6 @@ export const InicioScreen: React.FC<InicioScreenProps> = ({
               </div>
             </div>
 
-            {/* Weekly Objective Card */}
-            <div className="p-4 rounded-xl bg-surface-container-low border border-surface-container flex items-center justify-between shadow-xs">
-              <div className="flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-xl overflow-hidden shadow-xs shrink-0 bg-surface-container">
-                  <img
-                    alt="Workspace Laptop"
-                    className="w-full h-full object-cover"
-                    src={ASSETS.laptopDesk}
-                  />
-                </div>
-                <div>
-                  <span className="font-label-xs text-label-xs text-primary font-bold uppercase tracking-wider">
-                    Objetivo de la Semana
-                  </span>
-                  <h4 className="font-label-lg text-label-lg font-semibold text-on-surface mt-0.5">
-                    Entregar Casos de Uso antes de medianoche
-                  </h4>
-                </div>
-              </div>
-              <span className="material-symbols-outlined text-primary text-[24px] shrink-0">outlined_flag</span>
-            </div>
-
             {/* Priority Tasks List Header */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
