@@ -96,28 +96,6 @@ export const RegistroScreen: React.FC<RegistroScreenProps> = ({ onNavigate, onLo
               Registra tu perfil para sincronizar materias, avisos y entregas del ciclo escolar.
             </p>
           </div>
-
-          {/* Student Community Visual Strip */}
-          <div className="relative z-10 mt-space-md pt-space-sm border-t border-on-primary/10 flex items-center justify-between">
-            <div className="flex -space-x-2 overflow-hidden">
-              <img
-                alt="Estudiante"
-                className="inline-block h-7 w-7 rounded-full ring-2 ring-primary-container object-cover"
-                src={ASSETS.studentThumb1}
-              />
-              <img
-                alt="Estudiante"
-                className="inline-block h-7 w-7 rounded-full ring-2 ring-primary-container object-cover"
-                src={ASSETS.studentThumb2}
-              />
-              <img
-                alt="Estudiante"
-                className="inline-block h-7 w-7 rounded-full ring-2 ring-primary-container object-cover"
-                src={ASSETS.studentThumb3}
-              />
-            </div>
-            <span className="font-label-sm text-label-sm text-on-primary/90 font-medium">+14,500 estudiantes activos</span>
-          </div>
         </div>
 
         {/* Registration Form Card Container */}
