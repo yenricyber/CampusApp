@@ -25,7 +25,7 @@ export const RecuperarScreen: React.FC<RecuperarScreenProps> = ({ onNavigate }) 
     <main className="flex flex-col relative w-full min-h-screen pt-16 pb-24 bg-surface justify-center items-center px-4">
       <div className="flex flex-col w-full max-w-sm sm:max-w-md mx-auto bg-surface-container-lowest p-6 sm:p-8 rounded-2xl shadow-xl border border-surface-container my-auto animate-fade-in">
         {/* Top Bar Back Action */}
-        <div className="flex items-center justify-between py-space-sm">
+        <div className="flex items-center justify-start py-space-sm">
           <button
             type="button"
             onClick={() => onNavigate('login')}
@@ -34,10 +34,6 @@ export const RecuperarScreen: React.FC<RecuperarScreenProps> = ({ onNavigate }) 
             <span className="material-symbols-outlined text-[18px]">arrow_back</span>
             <span>Regresar al inicio</span>
           </button>
-          <span className="inline-flex items-center gap-space-2xs text-outline text-label-sm font-label-sm">
-            <span className="material-symbols-outlined text-[15px] text-tertiary-container">verified_user</span>
-            Portal Seguro SSL 256-bit
-          </span>
         </div>
 
         {/* Security Emblem / Delightful Badge */}
