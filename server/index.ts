@@ -44,6 +44,11 @@ const initDB = async () => {
         data JSON
       )
     `);
+    try {
+      await pool.query(`ALTER TABLE users ADD COLUMN avatarUrl LONGTEXT`);
+    } catch (e) {
+      // Column likely already exists
+    }
     console.log('Tables are ready');
   } catch (error) {
     console.error('Failed to init DB:', error);
@@ -63,6 +68,10 @@ app.post('/api/register', async (req, res) => {
     );
     res.json({ success: true, user: { id, studentId, name, program, semester, avatarUrl } });
   } catch (error: any) {
+    console.error('Register error:', error);
+    if (error.code === 'ER_DUP_ENTRY' || error.errno === 1062) {
+      return res.status(400).json({ error: 'La matrícula o correo ya está registrado. Por favor inicia sesión.' });
+    }
     res.status(500).json({ error: error.message });
   }
 });
@@ -76,9 +85,10 @@ app.post('/api/login', async (req, res) => {
       delete user.password;
       res.json({ success: true, user });
     } else {
-      res.status(401).json({ error: 'Credenciales incorrectas' });
+      res.status(401).json({ error: 'Matrícula o contraseña incorrecta' });
     }
   } catch (error: any) {
+    console.error('Login error:', error);
     res.status(500).json({ error: error.message });
   }
 });
