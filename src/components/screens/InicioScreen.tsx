@@ -9,6 +9,7 @@ interface InicioScreenProps {
   onSelectTask: (task: AcademicTask) => void;
   onToggleTaskCompleted: (taskId: string) => void;
   onOpenNotifications?: () => void;
+  onOpenTrabajoGrupal?: () => void;
 }
 
 export const InicioScreen: React.FC<InicioScreenProps> = ({
@@ -18,6 +19,7 @@ export const InicioScreen: React.FC<InicioScreenProps> = ({
   onSelectTask,
   onToggleTaskCompleted,
   onOpenNotifications,
+  onOpenTrabajoGrupal,
 }) => {
   const [filterCategory, setFilterCategory] = useState<'all' | 'urgent' | 'pending' | 'done' | 'math' | 'dev'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -331,15 +333,21 @@ export const InicioScreen: React.FC<InicioScreenProps> = ({
             </div>
 
             {/* Collaborative Teaser Card */}
-            <div className="p-5 rounded-2xl bg-surface-container-low border border-surface-container flex items-center justify-between gap-3 shadow-xs">
+            <div
+              onClick={onOpenTrabajoGrupal}
+              className="p-5 rounded-2xl bg-surface-container-low border border-surface-container flex items-center justify-between gap-3 shadow-xs hover:border-primary/40 hover:bg-surface-container-high transition-all cursor-pointer group"
+            >
               <div className="space-y-1 min-w-0">
                 <span className="font-label-xs text-label-xs text-primary font-bold uppercase">Trabajo Grupal</span>
-                <h5 className="font-label-md text-label-md font-semibold text-on-surface">Invita a tu equipo</h5>
-                <p className="font-body-xs text-body-xs text-on-surface-variant">Sincroniza avances con tus binas</p>
+                <h5 className="font-label-md text-label-md font-semibold text-on-surface group-hover:text-primary transition-colors">Invita a tu equipo</h5>
+                <p className="font-body-xs text-body-xs text-on-surface-variant font-medium text-primary flex items-center gap-0.5">
+                  <span>Sincroniza avances con tus binas</span>
+                  <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                </p>
               </div>
               <img
                 alt="Team work"
-                className="w-14 h-14 rounded-xl object-cover shadow-xs shrink-0"
+                className="w-14 h-14 rounded-xl object-cover shadow-xs shrink-0 group-hover:scale-105 transition-transform"
                 src={ASSETS.studentsTeamInicio}
               />
             </div>

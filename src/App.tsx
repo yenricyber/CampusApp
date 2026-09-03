@@ -13,6 +13,7 @@ import { LoginScreen } from './components/screens/LoginScreen';
 import { RegistroScreen } from './components/screens/RegistroScreen';
 import { RecuperarScreen } from './components/screens/RecuperarScreen';
 import { PerfilScreen } from './components/screens/PerfilScreen';
+import { TrabajoGrupalModal } from './components/TrabajoGrupalModal';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
@@ -22,6 +23,7 @@ export default function App() {
   const [selectedTask, setSelectedTask] = useState<AcademicTask | null>(null);
   const [isScreenPickerOpen, setIsScreenPickerOpen] = useState(false);
   const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false);
+  const [isTrabajoGrupalModalOpen, setIsTrabajoGrupalModalOpen] = useState(false);
   const [defaultReminderMinutes, setDefaultReminderMinutes] = useState(10);
   const [notificationToast, setNotificationToast] = useState<{ title: string; body: string } | null>(null);
 
@@ -214,6 +216,7 @@ export default function App() {
             }}
             onToggleTaskCompleted={handleToggleTaskCompleted}
             onOpenNotifications={() => setIsNotificationsModalOpen(true)}
+            onOpenTrabajoGrupal={() => setIsTrabajoGrupalModalOpen(true)}
           />
         )}
 
@@ -281,6 +284,14 @@ export default function App() {
         tasks={tasks}
         defaultReminderMinutes={defaultReminderMinutes}
         onChangeDefaultReminder={setDefaultReminderMinutes}
+      />
+
+      {/* Trabajo Grupal & Bina Sync Modal */}
+      <TrabajoGrupalModal
+        isOpen={isTrabajoGrupalModalOpen}
+        onClose={() => setIsTrabajoGrupalModalOpen(false)}
+        tasks={tasks}
+        onUpdateTask={handleUpdateTask}
       />
 
       {/* Floating In-App Toast Banner Notification */}
