@@ -2,35 +2,46 @@ import React, { useState } from 'react';
 import { ScreenType } from '../../types';
 import { ASSETS } from '../../data/mockData';
 
+import { UserProfile } from '../../types';
+
 interface LoginScreenProps {
   onNavigate: (screen: ScreenType) => void;
-  onLoginSuccess: () => void;
+  onLoginSuccess: (user: UserProfile) => void;
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigate, onLoginSuccess }) => {
-  const [studentId, setStudentId] = useState('al220914@universidad.edu.mx');
-  const [password, setPassword] = useState('••••••••••••');
+  const [studentId, setStudentId] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setTimeout(() => {
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentId, password }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        onLoginSuccess(data.user);
+        onNavigate('inicio');
+      } else {
+        alert(data.error);
+      }
+    } catch (err) {
+      alert('Error de conexión');
+    } finally {
       setIsLoading(false);
-      onLoginSuccess();
-      onNavigate('inicio');
-    }, 600);
+    }
   };
 
   const handleBiometric = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      onLoginSuccess();
-      onNavigate('inicio');
-    }, 500);
+    // Dummy biometric login
+    alert('Biometría no configurada aún');
   };
 
   return (
@@ -40,7 +51,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigate, onLoginSuc
         <div className="flex flex-col items-center text-center mt-space-md mb-space-xl">
           <div className="relative w-20 h-20 rounded-xl bg-surface-container shadow-md flex items-center justify-center p-space-xs mb-space-md">
             <img
-              alt="UniTask Brand Logo"
+              alt="CampusApp Brand Logo"
               className="w-full h-full object-contain rounded-lg"
               src={ASSETS.logo}
             />

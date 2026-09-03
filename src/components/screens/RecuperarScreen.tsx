@@ -82,7 +82,7 @@ export const RecuperarScreen: React.FC<RecuperarScreenProps> = ({ onNavigate }) 
             Recuperar Contraseña
           </h1>
           <p className="font-body-md text-body-md text-on-surface-variant leading-relaxed">
-            Ingresa tu matrícula o correo institucional asociado a tu cuenta UniTask. Te enviaremos un código de verificación seguro para restablecer tu acceso.
+            Ingresa tu matrícula o correo institucional asociado a tu cuenta CampusApp. Te enviaremos un código de verificación seguro para restablecer tu acceso.
           </p>
         </div>
 
@@ -255,7 +255,7 @@ export const RecuperarScreen: React.FC<RecuperarScreenProps> = ({ onNavigate }) 
             <span className="material-symbols-outlined text-[18px]">arrow_back</span>
             <span>Volver a Iniciar Sesión</span>
           </button>
-          <span className="font-label-sm text-label-sm text-outline">UniTask Academic Platform © 2025</span>
+          <span className="font-label-sm text-label-sm text-outline">CampusApp Academic Platform © 2025</span>
         </div>
       </div>
     </main>

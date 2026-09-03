@@ -2,11 +2,14 @@ import React, { useState } from 'react';
 import { ScreenType } from '../../types';
 import { ASSETS } from '../../data/mockData';
 
+import { UserProfile } from '../../types';
+
 interface RegistroScreenProps {
   onNavigate: (screen: ScreenType) => void;
+  onLoginSuccess: (user: UserProfile) => void;
 }
 
-export const RegistroScreen: React.FC<RegistroScreenProps> = ({ onNavigate }) => {
+export const RegistroScreen: React.FC<RegistroScreenProps> = ({ onNavigate, onLoginSuccess }) => {
   const [studentId, setStudentId] = useState('');
   const [fullName, setFullName] = useState('');
   const [career, setCareer] = useState('');
@@ -17,24 +20,57 @@ export const RegistroScreen: React.FC<RegistroScreenProps> = ({ onNavigate }) =>
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState(false);
+  const [avatarBase64, setAvatarBase64] = useState<string | null>(null);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarBase64(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const semesters = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
   const hasEdu = studentId.includes('@') && studentId.includes('.edu');
   const passwordsMatch = password.length > 0 && password === confirmPassword;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!acceptTerms) return;
+    if (!acceptTerms || !passwordsMatch) return;
 
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
+      const res = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentId,
+          password,
+          name: fullName,
+          program: career,
+          semester: `${selectedSemester}º Semestre`,
+          avatarUrl: avatarBase64 || ASSETS.userAvatar
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSuccessMessage(true);
+        setTimeout(() => {
+          onLoginSuccess(data.user);
+          onNavigate('inicio');
+        }, 1200);
+      } else {
+        alert(data.error);
+      }
+    } catch (err) {
+      alert('Error de conexión');
+    } finally {
       setIsSubmitting(false);
-      setSuccessMessage(true);
-      setTimeout(() => {
-        onNavigate('inicio');
-      }, 1200);
-    }, 1000);
+    }
   };
 
   return (
@@ -97,6 +133,35 @@ export const RegistroScreen: React.FC<RegistroScreenProps> = ({ onNavigate }) =>
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-space-lg" id="registerForm">
+            {/* Foto de Perfil */}
+            <div className="flex flex-col items-center gap-space-sm">
+              <label className="relative cursor-pointer group">
+                <div className="w-24 h-24 rounded-full overflow-hidden bg-surface-container-low ring-2 ring-primary/20 flex items-center justify-center relative">
+                  {avatarBase64 ? (
+                    <img src={avatarBase64} alt="Avatar preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="material-symbols-outlined text-[40px] text-outline group-hover:text-primary transition-colors">
+                      add_a_photo
+                    </span>
+                  )}
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="material-symbols-outlined text-white text-[24px]">
+                      edit
+                    </span>
+                  </div>
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+              </label>
+              <span className="font-label-sm text-label-sm text-on-surface-variant">
+                Sube tu foto de perfil (Opcional)
+              </span>
+            </div>
+
             {/* 1. Matrícula o Correo Institucional */}
             <div className="flex flex-col gap-space-2xs">
               <label
@@ -174,13 +239,15 @@ export const RegistroScreen: React.FC<RegistroScreenProps> = ({ onNavigate }) =>
                   className="w-full h-12 pl-10 pr-10 rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-1 focus:ring-primary appearance-none transition-all cursor-pointer"
                 >
                   <option value="">Selecciona tu programa académico</option>
-                  <option value="software">Ingeniería de Software y Sistemas</option>
-                  <option value="redes">Ingeniería en Redes y Ciberseguridad</option>
-                  <option value="datos">Licenciatura en Ciencia de Datos</option>
-                  <option value="biomedica">Ingeniería Biomédica</option>
-                  <option value="industrial">Ingeniería Industrial y de Procesos</option>
-                  <option value="diseno">Licenciatura en Diseño y Tecnologías Web</option>
-                  <option value="administracion">Administración de Empresas y Finanzas</option>
+                  <option value="Derecho (RVOE 1275)">Derecho (RVOE 1275)</option>
+                  <option value="Enfermería (RVOE 2048)">Enfermería (RVOE 2048)</option>
+                  <option value="Gastronomía (RVOE 1507)">Gastronomía (RVOE 1507)</option>
+                  <option value="Nutrición (RVOE 1155)">Nutrición (RVOE 1155)</option>
+                  <option value="Psicología (RVOE 994)">Psicología (RVOE 994)</option>
+                  <option value="Negocios Internacionales (RVOE 809)">Negocios Internacionales (RVOE 809)</option>
+                  <option value="Ventas y Mercadotecnia (RVOE 1828)">Ventas y Mercadotecnia (RVOE 1828)</option>
+                  <option value="Ingeniería en Sistemas Computacionales">Ingeniería en Sistemas Computacionales</option>
+                  <option value="Mercadotecnia Global">Mercadotecnia Global</option>
                 </select>
                 <span className="material-symbols-outlined absolute right-space-sm text-outline pointer-events-none text-[20px]">
                   arrow_drop_down
@@ -345,7 +412,7 @@ export const RegistroScreen: React.FC<RegistroScreenProps> = ({ onNavigate }) =>
               ) : successMessage ? (
                 <>
                   <span className="material-symbols-outlined text-[20px]">task_alt</span>
-                  <span>¡Bienvenido a UniTask!</span>
+                  <span>¡Bienvenido a CampusApp!</span>
                 </>
               ) : (
                 <>
@@ -379,7 +446,7 @@ export const RegistroScreen: React.FC<RegistroScreenProps> = ({ onNavigate }) =>
           <div className="flex flex-col">
             <h4 className="font-label-md text-label-md font-bold text-on-surface">Validación Académica Segura</h4>
             <p className="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
-              UniTask sincroniza credenciales mediante encriptación SSL bajo el estándar de identidad de tu institución.
+              CampusApp sincroniza credenciales mediante encriptación SSL bajo el estándar de identidad de tu institución.
             </p>
           </div>
         </div>

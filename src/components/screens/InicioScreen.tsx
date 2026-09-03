@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { AcademicTask, ScreenType } from '../../types';
+import { AcademicTask, ScreenType, UserProfile } from '../../types';
 import { ASSETS } from '../../data/mockData';
 
 interface InicioScreenProps {
+  currentUser: UserProfile;
   tasks: AcademicTask[];
   onNavigate: (screen: ScreenType) => void;
   onSelectTask: (task: AcademicTask) => void;
@@ -10,6 +11,7 @@ interface InicioScreenProps {
 }
 
 export const InicioScreen: React.FC<InicioScreenProps> = ({
+  currentUser,
   tasks,
   onNavigate,
   onSelectTask,
@@ -58,13 +60,9 @@ export const InicioScreen: React.FC<InicioScreenProps> = ({
           <div className="absolute -right-6 -bottom-6 w-32 h-32 rounded-full bg-primary-fixed/10 pointer-events-none blur-xl"></div>
           <div className="relative z-10 flex items-start justify-between">
             <div>
-              <div className="inline-flex items-center gap-space-2xs px-space-xs py-0.5 rounded-full bg-surface-variant/20 text-on-primary-container mb-space-2xs">
-                <span className="material-symbols-outlined text-[14px]">school</span>
-                <span className="font-label-sm text-label-sm">4to Semestre</span>
-              </div>
-              <h1 className="font-headline-xl-mobile text-headline-xl-mobile font-bold tracking-tight">¡Hola, Valeria!</h1>
+              <h1 className="font-headline-xl-mobile text-headline-xl-mobile font-bold tracking-tight">¡Hola, {currentUser.name.split(' ')[0]}!</h1>
               <p className="font-body-sm text-body-sm text-surface-container-highest/90 mt-0.5">
-                Ingeniería de Software • Campus Central
+                {currentUser.program}
               </p>
             </div>
             <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-xs flex items-center justify-center text-on-primary">

@@ -2,17 +2,23 @@ import React from 'react';
 import { ScreenType } from '../types';
 import { ASSETS } from '../data/mockData';
 
+import { UserProfile } from '../types';
+
 interface AppHeaderProps {
+  currentUser?: UserProfile;
   currentScreen: ScreenType;
   onNavigate: (screen: ScreenType) => void;
   onBack?: () => void;
+  onLogout?: () => void;
   onOpenScreenPicker?: () => void;
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
+  currentUser,
   currentScreen,
   onNavigate,
   onBack,
+  onLogout,
   onOpenScreenPicker,
 }) => {
   const isSubScreen = currentScreen === 'registro-rapido' || currentScreen === 'detalle-tarea';
@@ -31,8 +37,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   };
 
   return (
-    <header className="fixed top-0 inset-x-0 z-50 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-safe">
-      <div className="h-16 px-margin-mobile flex items-center justify-between gap-space-sm max-w-md mx-auto">
+    <header className="fixed top-0 inset-x-0 z-50 bg-surface/80 backdrop-blur-xl border-b border-surface-container shadow-xs">
+      <div className="h-16 px-margin-mobile flex items-center justify-between gap-space-sm w-full mx-auto">
         {/* Left Side */}
         {isSubScreen ? (
           <div className="flex items-center gap-space-xs min-w-0">
@@ -46,7 +52,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             </button>
             <div className="flex items-center gap-space-2xs min-w-0">
               <img
-                alt="UniTask Brand Logo"
+                alt="CampusApp Brand Logo"
                 className="h-6 w-auto object-contain hidden xs:inline-block shrink-0"
                 src={ASSETS.logo}
               />
@@ -61,17 +67,41 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             onClick={() => onNavigate('inicio')}
           >
             <img
-              alt="UniTask Brand Logo"
+              alt="CampusApp Brand Logo"
               className="h-8 w-auto object-contain"
               src={ASSETS.logo}
             />
             <span className="font-headline-sm text-headline-sm text-primary tracking-tight font-bold">
-              UniTask
+              CampusApp
             </span>
           </div>
         )}
 
-        {/* Right Side */}
+        {/* Desktop Navigation */}
+        {currentUser && (
+          <div className="hidden md:flex items-center gap-space-lg mx-auto">
+            <button
+              onClick={() => onNavigate('inicio')}
+              className={`font-label-md text-label-md transition-colors ${currentScreen === 'inicio' ? 'text-primary font-bold' : 'text-on-surface-variant hover:text-on-surface'}`}
+            >
+              Inicio
+            </button>
+            <button
+              onClick={() => onNavigate('calendario')}
+              className={`font-label-md text-label-md transition-colors ${currentScreen === 'calendario' ? 'text-primary font-bold' : 'text-on-surface-variant hover:text-on-surface'}`}
+            >
+              Calendario
+            </button>
+            <button
+              onClick={() => onNavigate('registro-rapido')}
+              className={`font-label-md text-label-md transition-colors ${currentScreen === 'registro-rapido' ? 'text-primary font-bold' : 'text-on-surface-variant hover:text-on-surface'}`}
+            >
+              Nuevo
+            </button>
+          </div>
+        )}
+
+        {/* Right Action / Profile area */}
         <div className="flex items-center gap-space-xs">
           {!isSubScreen && getSectionLabel() && (
             <span className="font-label-md text-label-md text-on-surface-variant font-medium hidden sm:inline-block">
@@ -93,14 +123,20 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           {/* Profile avatar button */}
           <button
             type="button"
-            onClick={() => onNavigate(currentScreen === 'login' ? 'inicio' : 'login')}
+            onClick={() => {
+              if (currentUser) {
+                onNavigate('perfil');
+              } else {
+                onNavigate(currentScreen === 'login' ? 'inicio' : 'login');
+              }
+            }}
             className="w-11 h-11 flex items-center justify-center rounded-full p-space-2xs focus:outline-none hover:bg-surface-container transition-colors"
-            title="Perfil / Iniciar Sesión"
+            title={currentUser ? "Cerrar sesión" : "Perfil / Iniciar Sesión"}
           >
             <img
               alt="Profile"
               className="w-8 h-8 rounded-full object-cover shadow-[0_1px_3px_rgba(15,23,42,0.1)] ring-1 ring-primary/20"
-              src={ASSETS.userAvatar}
+              src={currentUser?.avatarUrl || ASSETS.userAvatar}
             />
           </button>
         </div>

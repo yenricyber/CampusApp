@@ -5,7 +5,8 @@ export type ScreenType =
   | 'detalle-tarea' 
   | 'login' 
   | 'registro' 
-  | 'recuperar';
+  | 'recuperar'
+  | 'perfil';
 
 export interface Subtask {
   id: string;

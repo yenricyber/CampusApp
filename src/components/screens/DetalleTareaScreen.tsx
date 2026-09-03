@@ -195,7 +195,7 @@ export const DetalleTareaScreen: React.FC<DetalleTareaScreenProps> = ({
                 Hoy, 24 Octubre 2025
               </p>
               <p className="font-body-sm text-body-sm text-on-surface-variant">
-                23:59 hrs • Plataforma Institucional UniTask
+                23:59 hrs • Plataforma Institucional CampusApp
               </p>
             </div>
           </div>
@@ -339,7 +339,7 @@ export const DetalleTareaScreen: React.FC<DetalleTareaScreenProps> = ({
               <div>
                 <p className="font-label-sm text-label-sm text-on-surface-variant">Compañera de bina asignada</p>
                 <p className="font-label-md text-label-md text-on-surface font-semibold">
-                  {task.partnerName || 'Valeria Cordero R.'}
+                  {task.partnerName || 'Compañero no asignado'}
                 </p>
               </div>
             </div>
