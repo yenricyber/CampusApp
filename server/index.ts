@@ -12,6 +12,13 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+// Helper: normaliza un studentId para que siempre se use la forma canónica (la parte antes del @)
+// Esto garantiza que "yenri.moo" y "yenri.moo@universidadlatino.edu.mx" se traten como el mismo usuario
+const normalizeStudentId = (rawId: string): string => {
+  if (!rawId) return '';
+  return rawId.toLowerCase().trim().split('@')[0];
+};
+
 const initDB = async () => {
   try {
     await pool.query(`
@@ -78,10 +85,20 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
+// Login flexible: acepta correo completo O matrícula corta, insensible a mayúsculas
 app.post('/api/login', async (req, res) => {
   try {
     const { studentId, password } = req.body;
-    const [rows]: any = await pool.query('SELECT * FROM users WHERE studentId = ? AND password = ?', [studentId, password]);
+    const inputLower = studentId.toLowerCase().trim();
+    const shortId = inputLower.split('@')[0];
+
+    // Buscar por coincidencia exacta, por correo completo, o por la parte corta (antes del @)
+    const [rows]: any = await pool.query(
+      `SELECT * FROM users WHERE 
+        (LOWER(studentId) = ? OR LOWER(studentId) = ? OR LOWER(studentId) LIKE ?) 
+        AND password = ?`,
+      [inputLower, shortId, `${shortId}@%`, password]
+    );
     if (rows.length > 0) {
       const user = rows[0];
       delete user.password;
@@ -97,7 +114,18 @@ app.post('/api/login', async (req, res) => {
 
 app.delete('/api/users/:studentId', async (req, res) => {
   try {
-    await pool.query('DELETE FROM users WHERE studentId = ?', [req.params.studentId]);
+    const studentId = req.params.studentId;
+    await pool.query('DELETE FROM users WHERE studentId = ?', [studentId]);
+    
+    // Delete all tasks associated with this user
+    const normalized = normalizeStudentId(studentId);
+    if (normalized) {
+      await pool.query(
+        'DELETE FROM tasks WHERE LOWER(userId) = ? OR LOWER(userId) LIKE ?', 
+        [normalized, `${normalized}@%`]
+      );
+    }
+    
     res.json({ success: true });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -122,16 +150,22 @@ app.get('/api/users/search', async (req, res) => {
 });
 
 // --- Tasks Endpoints ---
+// GET: Busca tareas usando la parte normalizada (corta) del userId para que coincida
+// sin importar si la tarea se guardó con "yenri.moo" o "yenri.moo@universidad..."
 app.get('/api/tasks', async (req, res) => {
   try {
     const userId = req.query.userId as string;
     let query = 'SELECT * FROM tasks';
     let params: any[] = [];
     if (userId) {
-      const cleanId = userId.toLowerCase().trim();
-      const shortId = cleanId.split('@')[0];
-      query = 'SELECT * FROM tasks WHERE LOWER(userId) = ? OR LOWER(userId) = ? OR LOWER(CAST(data AS CHAR)) LIKE ? OR LOWER(CAST(data AS CHAR)) LIKE ?';
-      params = [cleanId, shortId, `%${cleanId}%`, `%${shortId}%`];
+      const normalized = normalizeStudentId(userId);
+      // Busca tareas donde el userId empieza con la forma normalizada
+      // Esto matchea tanto "yenri.moo" como "yenri.moo@universidad..."
+      query = `SELECT * FROM tasks WHERE 
+        LOWER(userId) = ? 
+        OR LOWER(userId) LIKE ?
+        OR LOWER(CAST(data AS CHAR)) LIKE ?`;
+      params = [normalized, `${normalized}@%`, `%${normalized}%`];
     }
     query += ' ORDER BY dueDate ASC, dueTime ASC';
     const [rows]: any = await pool.query(query, params);
@@ -147,11 +181,15 @@ app.get('/api/tasks', async (req, res) => {
   }
 });
 
+// POST: Normaliza el userId al guardar para consistencia
 app.post('/api/tasks', async (req, res) => {
   try {
     const task = req.body;
-    const userId = task.userId || task.studentId || '';
-    const data = JSON.stringify(task);
+    const rawUserId = task.userId || task.studentId || '';
+    // Normalizar: siempre guardamos la forma canónica (antes del @)
+    const userId = normalizeStudentId(rawUserId) || rawUserId;
+    const taskWithNormalizedUser = { ...task, userId };
+    const data = JSON.stringify(taskWithNormalizedUser);
     await pool.query(
       `INSERT INTO tasks (id, userId, code, courseName, moduleOrDetail, title, description, dueTimeText, dueDate, dueTime, status, priority, progressPercent, timelineSection, category, data) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -194,3 +232,4 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 export default app;
+
