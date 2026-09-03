@@ -246,38 +246,6 @@ export const DetalleTareaScreen: React.FC<DetalleTareaScreenProps> = ({
           </div>
         </div>
 
-        {/* Professor & Academic Context Details */}
-        <div className="px-margin-mobile mb-space-sm">
-          <div className="bg-surface-container-lowest rounded-xl p-space-md shadow-xs flex items-center justify-between gap-space-sm border border-surface-container">
-            <div className="flex items-center gap-space-sm min-w-0">
-              <img
-                alt="Profesor Titular"
-                className="w-11 h-11 rounded-full object-cover shrink-0 shadow-xs ring-1 ring-primary/10"
-                src={task.professorPhoto || ASSETS.professorPhoto}
-              />
-              <div className="min-w-0">
-                <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wide">
-                  Profesor Titular
-                </span>
-                <h3 className="font-label-lg text-label-lg text-on-surface truncate font-semibold">
-                  {task.professorName || 'Dr. Fernando Méndez'}
-                </h3>
-                <p className="font-body-sm text-body-sm text-primary truncate font-medium">
-                  {task.courseName} (Módulo 3)
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              aria-label="Contactar Profesor"
-              onClick={() => showToast('Iniciando chat institucional con el profesor...')}
-              className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary active:scale-95 transition-transform hover:bg-surface-container-high cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[20px]">chat</span>
-            </button>
-          </div>
-        </div>
-
         {/* Task Full Description Card */}
         <div className="px-margin-mobile mb-space-sm">
           <div className="bg-surface-container-lowest rounded-xl p-space-md shadow-xs flex flex-col gap-space-xs border border-surface-container">
