@@ -1,0 +1,7 @@
+{
+  "name": "UniTask",
+  "description": "Portal estudiantil de tareas y gestión académica con calendario, registro rápido y seguimiento.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
