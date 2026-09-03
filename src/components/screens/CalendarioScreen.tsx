@@ -14,13 +14,21 @@ export const CalendarioScreen: React.FC<CalendarioScreenProps> = ({
   onSelectTask,
   onToggleTaskCompleted,
 }) => {
+  const today = new Date();
   const [activeFilter, setActiveFilter] = useState<'all' | 'urgent' | 'done'>('all');
   const [viewMode, setViewMode] = useState<'week' | 'month'>('month');
   
-  // State for calendar navigation (default Oct/Nov 2025 or current year/month)
-  const [currentYear, setCurrentYear] = useState<number>(2025);
-  const [currentMonth, setCurrentMonth] = useState<number>(9); // 0-indexed (9 = Octubre)
-  const [selectedDay, setSelectedDay] = useState<number | null>(24);
+  // State for calendar navigation automatically directed to real system date (new Date())
+  const [currentYear, setCurrentYear] = useState<number>(today.getFullYear());
+  const [currentMonth, setCurrentMonth] = useState<number>(today.getMonth());
+  const [selectedDay, setSelectedDay] = useState<number | null>(today.getDate());
+
+  const handleGoToToday = () => {
+    const now = new Date();
+    setCurrentYear(now.getFullYear());
+    setCurrentMonth(now.getMonth());
+    setSelectedDay(now.getDate());
+  };
 
   const monthNames = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -128,13 +136,22 @@ export const CalendarioScreen: React.FC<CalendarioScreenProps> = ({
                 </button>
               </div>
 
-              {/* Month Arrow Buttons */}
-              <div className="flex items-center gap-1 bg-surface-container-low p-1 rounded-xl border border-surface-container">
+              {/* Month Arrow Buttons & Today Trigger */}
+              <div className="flex items-center gap-1.5 bg-surface-container-low p-1 rounded-xl border border-surface-container">
+                <button
+                  type="button"
+                  onClick={handleGoToToday}
+                  className="px-2.5 py-1 rounded-lg bg-surface hover:bg-surface-container text-primary font-label-xs text-label-xs font-bold transition-all cursor-pointer shadow-2xs flex items-center gap-1"
+                  title="Ir a la fecha actual de hoy"
+                >
+                  <span className="material-symbols-outlined text-[14px] font-bold">today</span>
+                  <span>Hoy</span>
+                </button>
                 <button
                   type="button"
                   onClick={handlePrevMonth}
                   aria-label="Mes anterior"
-                  className="w-9 h-9 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface transition-all cursor-pointer"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface transition-all cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[20px]">chevron_left</span>
                 </button>
@@ -142,7 +159,7 @@ export const CalendarioScreen: React.FC<CalendarioScreenProps> = ({
                   type="button"
                   onClick={handleNextMonth}
                   aria-label="Mes siguiente"
-                  className="w-9 h-9 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface transition-all cursor-pointer"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface transition-all cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[20px]">chevron_right</span>
                 </button>
@@ -157,6 +174,7 @@ export const CalendarioScreen: React.FC<CalendarioScreenProps> = ({
               {dayNamesShort.map((dayName, idx) => {
                 const dNum = weekDays[idx] || (idx + 20);
                 const isSelected = selectedDay === dNum;
+                const isToday = today.getFullYear() === currentYear && today.getMonth() === currentMonth && today.getDate() === dNum;
                 const dayTasksCount = tasks.filter((t) => t.dueDate && parseInt(t.dueDate.split('-')[2], 10) === dNum).length;
                 return (
                   <button
@@ -166,6 +184,8 @@ export const CalendarioScreen: React.FC<CalendarioScreenProps> = ({
                     className={`flex flex-col items-center justify-center py-3 px-1 rounded-xl transition-all cursor-pointer border ${
                       isSelected
                         ? 'bg-primary text-on-primary border-primary shadow-md font-bold scale-[1.02]'
+                        : isToday
+                        ? 'bg-secondary-container/20 border-secondary text-on-surface font-semibold'
                         : 'bg-surface-container-low text-on-surface-variant border-transparent hover:bg-surface-container'
                     }`}
                   >
@@ -202,6 +222,7 @@ export const CalendarioScreen: React.FC<CalendarioScreenProps> = ({
                 {Array.from({ length: daysInMonth }).map((_, i) => {
                   const dNum = i + 1;
                   const isSelected = selectedDay === dNum;
+                  const isToday = today.getFullYear() === currentYear && today.getMonth() === currentMonth && today.getDate() === dNum;
                   const dayTasks = tasks.filter((t) => t.dueDate && parseInt(t.dueDate.split('-')[2], 10) === dNum);
                   return (
                     <button
@@ -211,12 +232,23 @@ export const CalendarioScreen: React.FC<CalendarioScreenProps> = ({
                       className={`h-12 md:h-16 rounded-xl p-1.5 flex flex-col justify-between items-start transition-all cursor-pointer border text-left ${
                         isSelected
                           ? 'bg-primary text-on-primary border-primary shadow-md font-bold ring-2 ring-primary/40'
+                          : isToday
+                          ? 'bg-secondary-fixed/30 border-secondary text-on-surface font-semibold shadow-xs'
                           : dayTasks.length > 0
                           ? 'bg-primary-container/20 border-primary/20 text-on-surface hover:bg-primary-container/40'
                           : 'bg-surface-container-low border-surface-container/50 text-on-surface-variant hover:bg-surface-container'
                       }`}
                     >
-                      <span className="font-label-sm text-label-sm font-bold">{dNum}</span>
+                      <div className="w-full flex items-center justify-between">
+                        <span className="font-label-sm text-label-sm font-bold">{dNum}</span>
+                        {isToday && (
+                          <span className={`px-1.5 py-0.2 rounded text-[9px] font-extrabold uppercase ${
+                            isSelected ? 'bg-white text-primary' : 'bg-secondary text-on-secondary'
+                          }`}>
+                            Hoy
+                          </span>
+                        )}
+                      </div>
                       {dayTasks.length > 0 && (
                         <div className="w-full flex items-center justify-between">
                           <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${isSelected ? 'bg-white/20 text-white' : 'bg-primary text-on-primary'}`}>
