@@ -104,9 +104,9 @@ export default function App() {
     const uId = user.studentId || user.id || '';
     if (uId) {
       const cached = localStorage.getItem(`campus_tasks_${uId}`);
-      if (cached) {
-        setTasks(JSON.parse(cached));
-      }
+      setTasks(cached ? JSON.parse(cached) : []);
+    } else {
+      setTasks([]);
     }
     fetchTasks(uId);
   };
@@ -133,7 +133,7 @@ export default function App() {
       const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           setTasks(data);
           if (targetId) {
             localStorage.setItem(`campus_tasks_${targetId}`, JSON.stringify(data));

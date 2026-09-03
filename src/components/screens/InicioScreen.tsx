@@ -271,11 +271,17 @@ export const InicioScreen: React.FC<InicioScreenProps> = ({
             {/* Academic Profile Card */}
             <div className="p-6 rounded-2xl bg-surface-container-lowest border border-surface-container shadow-xs flex flex-col gap-4">
               <div className="flex items-center gap-3.5">
-                <img
-                  alt="User avatar"
-                  className="w-14 h-14 rounded-full object-cover shadow-xs ring-2 ring-primary/20"
-                  src={currentUser.avatarUrl || ASSETS.userAvatar}
-                />
+                {currentUser.avatarUrl ? (
+                  <img
+                    alt="User avatar"
+                    className="w-14 h-14 rounded-full object-cover shadow-xs ring-2 ring-primary/20 shrink-0"
+                    src={currentUser.avatarUrl}
+                  />
+                ) : (
+                  <div className="w-14 h-14 rounded-full bg-primary-container text-on-primary-container font-headline-md font-bold flex items-center justify-center shadow-xs ring-2 ring-primary/20 shrink-0 uppercase select-none">
+                    {currentUser.name ? currentUser.name.charAt(0) : <span className="material-symbols-outlined text-[24px]">person</span>}
+                  </div>
+                )}
                 <div className="min-w-0">
                   <h3 className="font-headline-sm text-headline-sm font-bold text-on-surface truncate">{currentUser.name}</h3>
                   <p className="font-body-xs text-body-xs text-on-surface-variant truncate">{currentUser.program}</p>

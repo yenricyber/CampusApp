@@ -117,11 +117,17 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             className="w-11 h-11 flex items-center justify-center rounded-full p-space-2xs focus:outline-none hover:bg-surface-container transition-colors"
             title={currentUser ? "Mi Perfil" : "Iniciar Sesión"}
           >
-            <img
-              alt="Profile"
-              className="w-8 h-8 rounded-full object-cover shadow-[0_1px_3px_rgba(15,23,42,0.1)] ring-1 ring-primary/20"
-              src={currentUser?.avatarUrl || ASSETS.userAvatar}
-            />
+            {currentUser?.avatarUrl ? (
+              <img
+                alt="Profile"
+                className="w-8 h-8 rounded-full object-cover shadow-[0_1px_3px_rgba(15,23,42,0.1)] ring-1 ring-primary/20"
+                src={currentUser.avatarUrl}
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-primary-container text-on-primary-container font-label-md font-bold flex items-center justify-center shadow-xs ring-1 ring-primary/20 uppercase select-none">
+                {currentUser?.name ? currentUser.name.charAt(0) : <span className="material-symbols-outlined text-[18px]">person</span>}
+              </div>
+            )}
           </button>
         </div>
       </div>

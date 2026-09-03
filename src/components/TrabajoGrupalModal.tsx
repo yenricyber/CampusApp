@@ -31,7 +31,7 @@ const REGISTERED_CLASSMATES: ClassmateUser[] = [
     name: 'Carlos Gómez',
     program: 'Base de Datos & Sistemas',
     campus: 'Campus Norte',
-    photo: ASSETS.userAvatar,
+    photo: '',
   },
   {
     username: 'ana.rodriguez',
@@ -135,6 +135,19 @@ export const TrabajoGrupalModal: React.FC<TrabajoGrupalModalProps> = ({
     }
   };
 
+  const handleReset = () => {
+    setIsSyncSuccess(false);
+    setFoundUser(null);
+    setSearchQuery('');
+    setSearchError(null);
+    setSelectedTaskIds([]);
+  };
+
+  const handleClose = () => {
+    handleReset();
+    onClose();
+  };
+
   const handleConfirmSync = () => {
     if (!foundUser || selectedTaskIds.length === 0) return;
 
@@ -143,9 +156,10 @@ export const TrabajoGrupalModal: React.FC<TrabajoGrupalModalProps> = ({
       if (task) {
         const updated: AcademicTask = {
           ...task,
+          partnerId: foundUser.username,
           partnerName: foundUser.name,
           partnerPhoto: foundUser.photo,
-          collaborators: [foundUser.name],
+          collaborators: [foundUser.name, foundUser.username],
         };
         onUpdateTask(updated);
       }
@@ -155,8 +169,8 @@ export const TrabajoGrupalModal: React.FC<TrabajoGrupalModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-surface-container-lowest border border-surface-container rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-scale-up">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in" onClick={handleClose}>
+      <div className="bg-surface-container-lowest border border-surface-container rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-scale-up" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="bg-primary text-on-primary p-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -169,7 +183,7 @@ export const TrabajoGrupalModal: React.FC<TrabajoGrupalModalProps> = ({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="w-9 h-9 rounded-full bg-on-primary/10 flex items-center justify-center hover:bg-on-primary/20 transition-colors cursor-pointer text-on-primary"
           >
             <span className="material-symbols-outlined text-[20px]">close</span>
@@ -179,22 +193,33 @@ export const TrabajoGrupalModal: React.FC<TrabajoGrupalModalProps> = ({
         {/* Body */}
         <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
           {isSyncSuccess ? (
-            <div className="text-center py-8 space-y-4 animate-scale-up">
+            <div className="text-center py-8 space-y-4 animate-scale-up flex flex-col items-center">
               <div className="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center mx-auto shadow-inner">
                 <span className="material-symbols-outlined text-[36px]">handshake</span>
               </div>
               <div>
                 <h4 className="font-headline-sm text-headline-sm font-bold text-on-surface">¡Sincronización Exitosa!</h4>
                 <p className="font-body-sm text-body-sm text-on-surface-variant mt-1 max-w-xs mx-auto">
-                  Se vincularon {selectedTaskIds.length} tareas en bina con <strong>{foundUser?.name}</strong>.
+                  Se vincularon {selectedTaskIds.length} {selectedTaskIds.length === 1 ? 'tarea' : 'tareas'} en bina con <strong>{foundUser?.name}</strong> ({foundUser?.username}).
                 </p>
               </div>
-              <button
-                onClick={onClose}
-                className="px-6 py-2.5 rounded-xl bg-primary text-on-primary font-label-md text-label-md font-bold hover:bg-primary-container transition-colors cursor-pointer shadow-xs"
-              >
-                Entendido
-              </button>
+              <div className="flex flex-col sm:flex-row gap-3 w-full justify-center pt-2">
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="px-5 py-2.5 rounded-xl bg-primary text-on-primary font-label-md text-label-md font-bold hover:bg-primary-container transition-colors cursor-pointer shadow-xs flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-[18px]">person_search</span>
+                  <span>Sincronizar otra tarea / compañero</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  className="px-5 py-2.5 rounded-xl bg-surface-container text-on-surface font-label-md text-label-md font-semibold hover:bg-surface-container-high transition-colors cursor-pointer"
+                >
+                  Entendido / Finalizar
+                </button>
+              </div>
             </div>
           ) : (
             <>

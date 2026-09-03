@@ -101,7 +101,7 @@ export const RegistroScreen: React.FC<RegistroScreenProps> = ({ onNavigate, onLo
           name: fullName,
           program: career,
           semester: `${periodNumber}º ${periodType}`,
-          avatarUrl: avatarBase64 || ASSETS.userAvatar
+          avatarUrl: avatarBase64 || ''
         }),
       });
       const data = await res.json();

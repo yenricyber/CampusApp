@@ -43,12 +43,18 @@ export const PerfilScreen: React.FC<PerfilScreenProps> = ({
         
         {/* Profile Card */}
         <div className="bg-surface-container-lowest rounded-xl shadow-xs p-space-lg flex flex-col items-center gap-space-md">
-          <div className="w-24 h-24 rounded-full overflow-hidden ring-4 ring-primary-container shadow-md">
-            <img
-              src={currentUser.avatarUrl || ASSETS.userAvatar}
-              alt="Avatar de usuario"
-              className="w-full h-full object-cover"
-            />
+          <div className="w-24 h-24 rounded-full overflow-hidden ring-4 ring-primary-container shadow-md bg-primary-container flex items-center justify-center text-on-primary-container">
+            {currentUser.avatarUrl ? (
+              <img
+                src={currentUser.avatarUrl}
+                alt="Avatar de usuario"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full font-headline-lg text-[36px] font-bold flex items-center justify-center uppercase select-none">
+                {currentUser.name ? currentUser.name.charAt(0) : <span className="material-symbols-outlined text-[48px]">person</span>}
+              </div>
+            )}
           </div>
           <div className="text-center">
             <h2 className="font-headline-sm text-headline-sm font-bold text-on-surface">

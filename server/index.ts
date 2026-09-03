@@ -125,8 +125,8 @@ app.get('/api/tasks', async (req, res) => {
     let query = 'SELECT * FROM tasks';
     let params: any[] = [];
     if (userId) {
-      query = 'SELECT * FROM tasks WHERE userId = ?';
-      params = [userId];
+      query = 'SELECT * FROM tasks WHERE userId = ? OR CAST(data AS CHAR) LIKE ?';
+      params = [userId, `%${userId}%`];
     }
     query += ' ORDER BY dueDate ASC, dueTime ASC';
     const [rows]: any = await pool.query(query, params);
@@ -146,6 +146,7 @@ app.post('/api/tasks', async (req, res) => {
   try {
     const task = req.body;
     const userId = task.userId || task.studentId || '';
+    const data = JSON.stringify(task);
     await pool.query(
       `INSERT INTO tasks (id, userId, code, courseName, moduleOrDetail, title, description, dueTimeText, dueDate, dueTime, status, priority, progressPercent, timelineSection, category, data) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
