@@ -64,9 +64,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigate, onLoginSuc
               </span>
             </div>
           </div>
-          <span className="font-label-sm text-label-sm text-secondary font-semibold uppercase tracking-wider mb-space-2xs bg-secondary-fixed/50 px-space-xs py-0.5 rounded-full">
-            Acceso Seguro
-          </span>
           <h1 className="font-headline-lg text-headline-lg text-primary tracking-tight font-bold">
             Portal Estudiantil de Tareas
           </h1>
@@ -181,26 +178,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigate, onLoginSuc
             </button>
           </form>
 
-          <div className="flex items-center gap-space-md my-space-2xs">
-            <div className="h-px bg-surface-variant flex-1"></div>
-            <span className="font-label-sm text-label-sm text-outline uppercase tracking-wider">o ingresa con</span>
-            <div className="h-px bg-surface-variant flex-1"></div>
-          </div>
-
-          {/* Biometric Auth Button */}
-          <button
-            type="button"
-            onClick={handleBiometric}
-            className="w-full h-12 rounded-lg bg-surface-container-high hover:bg-surface-variant text-on-surface font-label-lg text-label-lg shadow-xs flex items-center justify-center gap-space-sm active:scale-[0.99] transition-all font-semibold cursor-pointer"
-          >
-            <span
-              className="material-symbols-outlined text-[22px] text-primary"
-              style={{ fontVariationSettings: "'FILL' 1" }}
-            >
-              fingerprint
-            </span>
-            <span>Ingresar con Face ID / Huella</span>
-          </button>
         </div>
 
         {/* Switch to Register link */}
@@ -217,18 +194,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigate, onLoginSuc
           </p>
         </div>
 
-        {/* Institutional SSL Banner */}
-        <div className="mt-space-lg flex flex-col items-center gap-space-xs text-center px-space-md">
-          <div className="flex items-center gap-space-2xs text-on-tertiary-container bg-tertiary-container/10 px-space-sm py-1 rounded-full">
-            <span className="material-symbols-outlined text-[16px]">lock</span>
-            <span className="font-label-sm text-label-sm font-semibold">
-              Conexión segura SSL - Sistema compatible con Android e iOS
-            </span>
-          </div>
-          <p className="font-body-sm text-body-sm text-outline mt-space-2xs">
-            Protección de identidad y privacidad de datos estudiantiles bajo normativa universitaria vigente.
-          </p>
-        </div>
       </div>
     </main>
   );
