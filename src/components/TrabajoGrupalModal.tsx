@@ -56,7 +56,7 @@ export const TrabajoGrupalModal: React.FC<TrabajoGrupalModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     setSearchError(null);
     setIsSyncSuccess(false);
@@ -67,6 +67,30 @@ export const TrabajoGrupalModal: React.FC<TrabajoGrupalModalProps> = ({
       return;
     }
 
+    // 1. Buscar en usuarios reales de la base de datos
+    try {
+      const res = await fetch(`/api/users/search?q=${encodeURIComponent(queryClean)}`);
+      if (res.ok) {
+        const dbUsers = await res.json();
+        if (Array.isArray(dbUsers) && dbUsers.length > 0) {
+          const u = dbUsers[0];
+          setFoundUser({
+            username: u.studentId,
+            name: u.name,
+            program: u.program || 'Carrera Académica',
+            campus: u.semester || 'Campus Principal',
+            photo: u.avatarUrl || '',
+          });
+          const pendingIds = tasks.filter((t) => t.status !== 'terminada').map((t) => t.id);
+          setSelectedTaskIds(pendingIds);
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn('Aviso de búsqueda backend:', err);
+    }
+
+    // 2. Buscar en lista estática
     const found = REGISTERED_CLASSMATES.find(
       (u) =>
         u.username.toLowerCase().includes(queryClean) ||
@@ -76,28 +100,30 @@ export const TrabajoGrupalModal: React.FC<TrabajoGrupalModalProps> = ({
 
     if (found) {
       setFoundUser(found);
-      // Select pending tasks by default
+      const pendingIds = tasks.filter((t) => t.status !== 'terminada').map((t) => t.id);
+      setSelectedTaskIds(pendingIds);
+      return;
+    }
+
+    // 3. Fallback dinámico con inicial de usuario real (sin imagen de muestra fija)
+    if (queryClean.length >= 3) {
+      const formattedName = queryClean.split('@')[0].replace('.', ' ');
+      const capitalizedName = formattedName
+        .split(' ')
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+      setFoundUser({
+        username: queryClean,
+        name: capitalizedName || 'Compañero Registrado',
+        program: 'Carrera Académica',
+        campus: 'Campus Principal',
+        photo: '',
+      });
       const pendingIds = tasks.filter((t) => t.status !== 'terminada').map((t) => t.id);
       setSelectedTaskIds(pendingIds);
     } else {
       setFoundUser(null);
-      // Fallback custom user if user typed a valid email format
-      if (queryClean.includes('@') || queryClean.length >= 4) {
-        const formattedName = queryClean.split('@')[0].replace('.', ' ');
-        const capitalizedName = formattedName
-          .split(' ')
-          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-          .join(' ');
-        setFoundUser({
-          username: queryClean,
-          name: capitalizedName || 'Compañero Registrado',
-          program: 'Carrera Académica',
-          campus: 'Campus Principal',
-          photo: ASSETS.partnerPhoto,
-        });
-      } else {
-        setSearchError('Usuario no encontrado. Asegúrate de ingresar el usuario o correo registrado.');
-      }
+      setSearchError('Usuario no encontrado. Asegúrate de ingresar el usuario o correo registrado.');
     }
   };
 
@@ -126,64 +152,63 @@ export const TrabajoGrupalModal: React.FC<TrabajoGrupalModalProps> = ({
     });
 
     setIsSyncSuccess(true);
-    setTimeout(() => {
-      setIsSyncSuccess(false);
-      onClose();
-    }, 2000);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
-      <div className="w-full max-w-lg bg-surface-container-lowest border border-surface-container rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+      <div className="bg-surface-container-lowest border border-surface-container rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-scale-up">
         {/* Header */}
-        <div className="px-6 py-4 bg-primary text-on-primary flex items-center justify-between">
+        <div className="bg-primary text-on-primary p-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-xs shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-on-primary/10 flex items-center justify-center">
               <span className="material-symbols-outlined text-[24px]">group_add</span>
             </div>
             <div>
-              <h2 className="font-headline-sm text-headline-sm font-bold">Trabajo Grupal & Binas</h2>
-              <p className="font-body-xs text-body-xs text-on-primary/80">
-                Busca a un compañero registrado y sincroniza tareas
-              </p>
+              <h3 className="font-title-md text-title-md font-bold">Trabajo Grupal & Binas</h3>
+              <p className="font-body-xs text-body-xs text-on-primary/80">Busca a un compañero registrado y sincroniza tareas</p>
             </div>
           </div>
           <button
-            type="button"
             onClick={onClose}
-            className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/15 transition-colors text-on-primary cursor-pointer"
+            className="w-9 h-9 rounded-full bg-on-primary/10 flex items-center justify-center hover:bg-on-primary/20 transition-colors cursor-pointer text-on-primary"
           >
-            <span className="material-symbols-outlined text-[22px]">close</span>
+            <span className="material-symbols-outlined text-[20px]">close</span>
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 space-y-5 overflow-y-auto flex-1">
+        {/* Body */}
+        <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
           {isSyncSuccess ? (
-            <div className="p-8 text-center bg-tertiary-container/30 border border-tertiary/20 rounded-2xl space-y-3 animate-scale-up">
-              <span className="material-symbols-outlined text-[56px] text-tertiary animate-bounce">
-                handshake
-              </span>
-              <h3 className="font-headline-sm text-headline-sm font-bold text-on-surface">
-                ¡Bina Sincronizada Exitosamente!
-              </h3>
-              <p className="font-body-sm text-body-sm text-on-surface-variant">
-                Las tareas seleccionadas ahora están sincronizadas con <strong>{foundUser?.name}</strong>.
-              </p>
+            <div className="text-center py-8 space-y-4 animate-scale-up">
+              <div className="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center mx-auto shadow-inner">
+                <span className="material-symbols-outlined text-[36px]">handshake</span>
+              </div>
+              <div>
+                <h4 className="font-headline-sm text-headline-sm font-bold text-on-surface">¡Sincronización Exitosa!</h4>
+                <p className="font-body-sm text-body-sm text-on-surface-variant mt-1 max-w-xs mx-auto">
+                  Se vincularon {selectedTaskIds.length} tareas en bina con <strong>{foundUser?.name}</strong>.
+                </p>
+              </div>
+              <button
+                onClick={onClose}
+                className="px-6 py-2.5 rounded-xl bg-primary text-on-primary font-label-md text-label-md font-bold hover:bg-primary-container transition-colors cursor-pointer shadow-xs"
+              >
+                Entendido
+              </button>
             </div>
           ) : (
             <>
-              {/* Search Form */}
+              {/* Step 1: Search Form */}
               <form onSubmit={handleSearch} className="space-y-2">
-                <label className="font-label-md text-label-md font-bold text-on-surface block">
-                  1. Buscar Usuario o Correo del Compañero
+                <label className="font-label-md text-label-md font-bold text-on-surface flex items-center gap-1.5">
+                  <span>1. Buscar Usuario o Correo del Compañero</span>
                 </label>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="ej. maria.sanchez, carlos.gomez@campus.edu..."
+                    placeholder="ej. goku, maria.sanchez, carlos.gomez@campus.edu..."
                     className="flex-1 h-12 px-4 rounded-xl bg-surface-container-low border border-surface-container text-on-surface font-body-sm text-body-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                   />
                   <button
@@ -206,11 +231,17 @@ export const TrabajoGrupalModal: React.FC<TrabajoGrupalModalProps> = ({
               {foundUser && (
                 <div className="p-4 rounded-xl bg-primary-container/20 border border-primary/20 space-y-4 animate-fade-in">
                   <div className="flex items-center gap-3.5">
-                    <img
-                      src={foundUser.photo}
-                      alt={foundUser.name}
-                      className="w-12 h-12 rounded-full object-cover shadow-xs border-2 border-primary/30 shrink-0"
-                    />
+                    {foundUser.photo && foundUser.photo.length > 20 && !foundUser.photo.includes('studentsTeamInicio') ? (
+                      <img
+                        src={foundUser.photo}
+                        alt={foundUser.name}
+                        className="w-12 h-12 rounded-full object-cover shadow-xs border-2 border-primary/30 shrink-0"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-primary text-on-primary font-headline-md text-headline-md font-bold flex items-center justify-center shadow-xs border-2 border-primary/30 shrink-0 uppercase">
+                        {foundUser.name.charAt(0)}
+                      </div>
+                    )}
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <h4 className="font-label-lg text-label-lg font-bold text-on-surface truncate">

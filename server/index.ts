@@ -104,6 +104,20 @@ app.delete('/api/users/:studentId', async (req, res) => {
   }
 });
 
+app.get('/api/users/search', async (req, res) => {
+  try {
+    const q = (req.query.q as string || '').toLowerCase().trim();
+    if (!q) return res.json([]);
+    const [rows]: any = await pool.query(
+      'SELECT id, studentId, name, program, semester, avatarUrl FROM users WHERE LOWER(studentId) LIKE ? OR LOWER(name) LIKE ?',
+      [`%${q}%`, `%${q}%`]
+    );
+    res.json(rows);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // --- Tasks Endpoints ---
 app.get('/api/tasks', async (req, res) => {
   try {
