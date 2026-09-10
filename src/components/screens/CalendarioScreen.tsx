@@ -26,19 +26,39 @@ export const CalendarioScreen: React.FC<CalendarioScreenProps> = ({
   onTogglePush,
   onTriggerTestPush,
 }) => {
-  const [selectedDay, setSelectedDay] = useState<number>(14);
+  const today = new Date();
+  const currentDay = today.getDate();
+  const [selectedDay, setSelectedDay] = useState<number>(currentDay);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
-  const weekDays = [
-    { dayNumber: 12, dayLabel: 'Lun', hasDelivery: false },
-    { dayNumber: 13, dayLabel: 'Mar', hasDelivery: false },
-    { dayNumber: 14, dayLabel: 'Mié', hasDelivery: true, isToday: true },
-    { dayNumber: 15, dayLabel: 'Jue', hasDelivery: false },
-    { dayNumber: 16, dayLabel: 'Vie', hasDelivery: false },
-    { dayNumber: 17, dayLabel: 'Sáb', hasDelivery: true },
-    { dayNumber: 18, dayLabel: 'Dom', hasDelivery: false },
-  ];
+  const jsDay = today.getDay();
+  const currentDayOfWeek = jsDay === 0 ? 7 : jsDay;
+
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const diff = (i + 1) - currentDayOfWeek;
+    const date = new Date(today);
+    date.setDate(today.getDate() + diff);
+    
+    const dayLabels = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    return {
+      dayNumber: date.getDate(),
+      dayLabel: dayLabels[date.getDay()],
+      hasDelivery: i === 2 || i === 5,
+      isToday: diff === 0,
+    };
+  });
+
+  const currentYear = today.getFullYear();
+  const currentMonthName = today.toLocaleDateString('es-ES', { month: 'long' });
+  const capitalizedMonthName = currentMonthName.charAt(0).toUpperCase() + currentMonthName.slice(1);
+  const month = today.getMonth();
+  
+  let periodStr = '';
+  if (month >= 0 && month <= 4) periodStr = `Primavera ${currentYear}`;
+  else if (month >= 5 && month <= 7) periodStr = `Verano ${currentYear}`;
+  else periodStr = `Otoño ${currentYear}`;
+
 
   const handleToggleAlarm = () => {
     if (onTogglePush) {
@@ -74,15 +94,15 @@ export const CalendarioScreen: React.FC<CalendarioScreenProps> = ({
       <div className="flex items-center justify-between mt-1">
         <div className="flex flex-col">
           <span className="font-headline text-[10px] text-on-surface-variant uppercase tracking-wider font-bold">
-            Período Otoño 2026
+            {periodStr}
           </span>
           <div className="flex items-center gap-1.5">
             <h2 className="font-headline text-[22px] font-bold text-on-surface tracking-tight">
-              Octubre 2026
+              {capitalizedMonthName} {currentYear}
             </h2>
             <button
               aria-label="Cambiar mes"
-              onClick={() => onShowToast('Seleccionador de mes del ciclo Otoño 2026')}
+              onClick={() => onShowToast(`Seleccionador de mes del ciclo ${periodStr}`)}
               className="w-7 h-7 flex items-center justify-center text-on-surface-variant hover:text-on-surface rounded-lg bg-surface-container-low transition-colors"
             >
               <span className="material-symbols-outlined text-[18px]">keyboard_arrow_down</span>
