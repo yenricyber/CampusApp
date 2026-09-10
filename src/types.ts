@@ -81,7 +81,9 @@ export interface Notice {
 export interface EvaluationItem {
   id: string;
   badge: string;
-  badgeType: 'urgent' | 'soon' | 'next';
+  badgeType: 'normal' | 'urgent' | 'soon';
+  type: 'examen' | 'entregable';
+  date?: string;
   dueTime: string;
   title: string;
   subject: string;

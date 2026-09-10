@@ -336,9 +336,18 @@ app.post('/api/calendar/import', authenticateToken, async (req: any, res: any) =
 
     const { career, semester } = students[0];
 
-    // Basic ICS parser
+    // Unfold lines first (ICS standard)
+    const rawLines = icsContent.split(/\r?\n/);
+    const lines = [];
+    for (const line of rawLines) {
+      if (line.startsWith(' ') || line.startsWith('\t')) {
+        if (lines.length > 0) lines[lines.length - 1] += line.substring(1);
+      } else {
+        lines.push(line);
+      }
+    }
+
     const events = [];
-    const lines = icsContent.split(/\\r?\\n/);
     let currentEvent: any = null;
     
     for (let line of lines) {
@@ -349,7 +358,7 @@ app.post('/api/calendar/import', authenticateToken, async (req: any, res: any) =
         currentEvent = null;
       } else if (currentEvent) {
         if (line.startsWith('SUMMARY:')) currentEvent.title = line.substring(8).trim();
-        if (line.startsWith('DESCRIPTION:')) currentEvent.description = line.substring(12).trim();
+        if (line.startsWith('DESCRIPTION:')) currentEvent.description = line.substring(12).trim().replace(/\\n/g, '\n');
         if (line.startsWith('LOCATION:')) currentEvent.location = line.substring(9).trim();
         if (line.startsWith('DTSTART')) {
            const parts = line.split(':');
@@ -437,6 +446,7 @@ app.get('/api/calendar/events', authenticateToken, async (req: any, res: any) =>
       badgeType: e.badge_type || 'normal',
       type: e.type,
       dueTime: e.due_time,
+      date: e.event_date,
       title: e.title,
       subject: e.subject,
       description: e.description,

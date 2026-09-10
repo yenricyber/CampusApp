@@ -1,0 +1,135 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Universidad Latino//Portal Estudiantil Calendario//ES
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Evaluaciones - Universidad Latino
+X-WR-TIMEZONE:America/Mexico_City
+X-WR-CALDESC:Calendario de exámenes\, entregas y actividades académicas de Universidad Latino.
+BEGIN:VEVENT
+UID:ev-1-202610@universidadlatino.edu.mx
+DTSTAMP:20260910T222742Z
+DTSTART:20261015T050000Z
+DTEND:20261015T055900Z
+SUMMARY:[Base de Datos II] Proyecto Fase 1: Arquitectura y Modelado
+DESCRIPTION:Proyecto Fase 1: Arquitectura y Modelado\n\nMateria: Base de Datos II\nTipo: Vence en 4 horas (proyecto)\nUbicación / Entrega: Plataforma Aula 4 / Lab L-102\nVencimiento: 14 Oct 2026, 23:59 hrs\nDiseño conceptual y físico con normalización 3FN y estimación de costos EXPLAIN ANALYZE.\n\nPortal Estudiantil • Universidad Latino
+LOCATION:Plataforma Aula 4 / Lab L-102
+STATUS:CONFIRMED
+CATEGORIES:ACADÉMICO,EVALUACIÓN
+BEGIN:VALARM
+TRIGGER:-P1D
+ACTION:DISPLAY
+DESCRIPTION:Recordatorio 24h: Entrega de Proyecto Fase 1: Arquitectura y Modelado
+END:VALARM
+BEGIN:VALARM
+TRIGGER:-PT2H
+ACTION:DISPLAY
+DESCRIPTION:¡Atención! Vence en 2 horas: Proyecto Fase 1: Arquitectura y Modelado
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:ev-2-202610@universidadlatino.edu.mx
+DTSTAMP:20260910T222742Z
+DTSTART:20261017T220000Z
+DTEND:20261018T000000Z
+SUMMARY:[Ingeniería de Software] Actividad 1.2: Matriz de Trazabilidad
+DESCRIPTION:Actividad 1.2: Matriz de Trazabilidad\n\nMateria: Ingeniería de Software\nTipo: En 3 días (actividad)\nUbicación / Entrega: Aula B-204 / Trabajo en Equipo\nVencimiento: 17 Oct 2026, 18:00 hrs\nEstructurar la matriz de trazabilidad bidireccional conectando requerimientos de usuario y pruebas según IEEE 830.\n\nPortal Estudiantil • Universidad Latino
+LOCATION:Aula B-204 / Trabajo en Equipo
+STATUS:CONFIRMED
+CATEGORIES:ACADÉMICO,EVALUACIÓN
+BEGIN:VALARM
+TRIGGER:-P1D
+ACTION:DISPLAY
+DESCRIPTION:Recordatorio 24h: Entrega de Actividad 1.2: Matriz de Trazabilidad
+END:VALARM
+BEGIN:VALARM
+TRIGGER:-PT2H
+ACTION:DISPLAY
+DESCRIPTION:¡Atención! Vence en 2 horas: Actividad 1.2: Matriz de Trazabilidad
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:ev-3-202610@universidadlatino.edu.mx
+DTSTAMP:20260910T222742Z
+DTSTART:20261022T190000Z
+DTEND:20261022T203000Z
+SUMMARY:[Redes de Computadoras] Reporte de Práctica 3: Enrutamiento OSPF
+DESCRIPTION:Reporte de Práctica 3: Enrutamiento OSPF\n\nMateria: Redes de Computadoras\nTipo: Próxima semana (practica)\nUbicación / Entrega: Laboratorio B-204\nVencimiento: 22 Oct 2026, 14:30 hrs\nConfiguración de áreas múltiples OSPF, métricas de costo y verificación de tablas de adyacencia.\n\nPortal Estudiantil • Universidad Latino
+LOCATION:Laboratorio B-204
+STATUS:CONFIRMED
+CATEGORIES:ACADÉMICO,EVALUACIÓN
+BEGIN:VALARM
+TRIGGER:-P1D
+ACTION:DISPLAY
+DESCRIPTION:Recordatorio 24h: Entrega de Reporte de Práctica 3: Enrutamiento OSPF
+END:VALARM
+BEGIN:VALARM
+TRIGGER:-PT2H
+ACTION:DISPLAY
+DESCRIPTION:¡Atención! Vence en 2 horas: Reporte de Práctica 3: Enrutamiento OSPF
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:ev-4-202610@universidadlatino.edu.mx
+DTSTAMP:20260910T222742Z
+DTSTART:20261026T160000Z
+DTEND:20261026T180000Z
+SUMMARY:[Ingeniería de Software] Examen Parcial 1: Ingeniería de Software
+DESCRIPTION:Examen Parcial 1: Ingeniería de Software\n\nMateria: Ingeniería de Software\nTipo: Examen Parcial (examen)\nUbicación / Entrega: Aula Magna - Edificio B\nVencimiento: 26 Oct 2026, 10:00 - 12:00 hrs\nEvaluación teórica y práctica de Análisis de Requerimientos, Diagramas de Casos de Uso y Especificación IEEE 830.\n\nPortal Estudiantil • Universidad Latino
+LOCATION:Aula Magna - Edificio B
+STATUS:CONFIRMED
+CATEGORIES:ACADÉMICO,EVALUACIÓN
+BEGIN:VALARM
+TRIGGER:-P1D
+ACTION:DISPLAY
+DESCRIPTION:Recordatorio 24h: Entrega de Examen Parcial 1: Ingeniería de Software
+END:VALARM
+BEGIN:VALARM
+TRIGGER:-PT2H
+ACTION:DISPLAY
+DESCRIPTION:¡Atención! Vence en 2 horas: Examen Parcial 1: Ingeniería de Software
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:ev-5-202610@universidadlatino.edu.mx
+DTSTAMP:20260910T222742Z
+DTSTART:20261029T040000Z
+DTEND:20261029T055900Z
+SUMMARY:[Arquitectura Web y Móvil] Prototipo Front-end React Native & PWA
+DESCRIPTION:Prototipo Front-end React Native & PWA\n\nMateria: Arquitectura Web y Móvil\nTipo: Entrega Final (proyecto)\nUbicación / Entrega: Lab Multimedia / Repositorio Git\nVencimiento: 28 Oct 2026, 23:59 hrs\nImplementación responsiva con soporte offline, manifest y animaciones nativas.\n\nPortal Estudiantil • Universidad Latino
+LOCATION:Lab Multimedia / Repositorio Git
+STATUS:CONFIRMED
+CATEGORIES:ACADÉMICO,EVALUACIÓN
+BEGIN:VALARM
+TRIGGER:-P1D
+ACTION:DISPLAY
+DESCRIPTION:Recordatorio 24h: Entrega de Prototipo Front-end React Native & PWA
+END:VALARM
+BEGIN:VALARM
+TRIGGER:-PT2H
+ACTION:DISPLAY
+DESCRIPTION:¡Atención! Vence en 2 horas: Prototipo Front-end React Native & PWA
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:ev-6-202610@universidadlatino.edu.mx
+DTSTAMP:20260910T222742Z
+DTSTART:20261030T143000Z
+DTEND:20261030T163000Z
+SUMMARY:[Base de Datos II] Examen Parcial 1: Optimización de Consultas SQL
+DESCRIPTION:Examen Parcial 1: Optimización de Consultas SQL\n\nMateria: Base de Datos II\nTipo: Examen Parcial (examen)\nUbicación / Entrega: Laboratorio L-102\nVencimiento: 30 Oct 2026, 08:30 - 10:30 hrs\nExamen de laboratorio sobre planes de ejecución, índices B-Tree, particionamiento y tuning.\n\nPortal Estudiantil • Universidad Latino
+LOCATION:Laboratorio L-102
+STATUS:CONFIRMED
+CATEGORIES:ACADÉMICO,EVALUACIÓN
+BEGIN:VALARM
+TRIGGER:-P1D
+ACTION:DISPLAY
+DESCRIPTION:Recordatorio 24h: Entrega de Examen Parcial 1: Optimización de Consultas SQL
+END:VALARM
+BEGIN:VALARM
+TRIGGER:-PT2H
+ACTION:DISPLAY
+DESCRIPTION:¡Atención! Vence en 2 horas: Examen Parcial 1: Optimización de Consultas SQL
+END:VALARM
+END:VEVENT
+END:VCALENDAR

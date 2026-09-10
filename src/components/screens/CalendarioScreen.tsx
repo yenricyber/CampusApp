@@ -59,7 +59,11 @@ export const CalendarioScreen: React.FC<CalendarioScreenProps> = ({
     return {
       dayNumber: date.getDate(),
       dayLabel: dayLabels[date.getDay()],
-      hasDelivery: i === 2 || i === 5,
+      hasDelivery: timeline.some(t => {
+        if (!t.date) return false;
+        const [y, m, d] = t.date.split('-');
+        return parseInt(d) === date.getDate() && parseInt(m) - 1 === date.getMonth();
+      }),
       isToday: diff === 0,
     };
   });
@@ -102,6 +106,12 @@ export const CalendarioScreen: React.FC<CalendarioScreenProps> = ({
     downloadIcsFile('evaluaciones_universidad_latino.ics', icsContent);
     onShowToast('¡Calendario completo (.ics) descargado! Compatible con Google Calendar y Outlook.');
   };
+
+  const filteredTimeline = timeline.filter(item => {
+    if (!item.date) return true; // Show items without dates (e.g. initial mock data if any)
+    const [y, m, d] = item.date.split('-');
+    return parseInt(d) === selectedDay && parseInt(m) - 1 === month;
+  });
 
   return (
     <div className="flex flex-col w-full px-4 gap-4 pb-28 pt-20 max-w-md mx-auto">
@@ -290,7 +300,7 @@ export const CalendarioScreen: React.FC<CalendarioScreenProps> = ({
       <div className="flex flex-col gap-3 mt-1">
         <div className="flex items-center justify-between">
           <span className="font-headline text-[11px] uppercase text-on-surface-variant font-bold tracking-wider">
-            Línea Temporal de Evaluaciones ({timeline.length})
+            Línea Temporal de Evaluaciones ({filteredTimeline.length})
           </span>
           <button
             onClick={() => setIsExportModalOpen(true)}
@@ -301,8 +311,15 @@ export const CalendarioScreen: React.FC<CalendarioScreenProps> = ({
           </button>
         </div>
 
+        {filteredTimeline.length === 0 && (
+          <div className="p-8 text-center bg-surface-container-low rounded-xl mt-2 border border-[#e3e8f3] shadow-inner">
+            <span className="material-symbols-outlined text-outline text-[32px] mb-2">event_busy</span>
+            <p className="text-[13px] font-headline text-on-surface-variant font-medium">No hay evaluaciones programadas para este día.</p>
+          </div>
+        )}
+
         {/* Lista Dinámica de Evaluaciones */}
-        {timeline.map((item) => {
+        {filteredTimeline.map((item) => {
           const isMenuOpen = activeMenuId === item.id;
           const googleLink = getGoogleCalendarUrl(item);
           const outlookLink = getOutlookWebUrl(item);
