@@ -3,7 +3,7 @@ import path from 'path';
 import dotenv from 'dotenv';
 import { pool, initDatabase } from './db';
 import mysql from 'mysql2/promise';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 dotenv.config();
