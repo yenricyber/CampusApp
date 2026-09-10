@@ -314,6 +314,143 @@ app.delete('/api/auth/delete-account', authenticateToken, async (req: any, res: 
   }
 });
 
+// 7. Import Calendar (.ics)
+app.post('/api/calendar/import', authenticateToken, async (req: any, res: any) => {
+  const { icsContent } = req.body;
+  const matricula = req.user.matricula;
+
+  if (!icsContent) {
+    return res.status(400).json({ error: 'Contenido ICS requerido.' });
+  }
+
+  try {
+    // Get student career and semester
+    const [students] = await pool.query<mysql.RowDataPacket[]>(
+      'SELECT career, semester FROM students WHERE matricula = ?',
+      [matricula]
+    );
+
+    if (students.length === 0) {
+      return res.status(404).json({ error: 'Estudiante no encontrado.' });
+    }
+
+    const { career, semester } = students[0];
+
+    // Basic ICS parser
+    const events = [];
+    const lines = icsContent.split(/\\r?\\n/);
+    let currentEvent: any = null;
+    
+    for (let line of lines) {
+      if (line.startsWith('BEGIN:VEVENT')) {
+        currentEvent = {};
+      } else if (line.startsWith('END:VEVENT') && currentEvent) {
+        if (currentEvent.title) events.push(currentEvent);
+        currentEvent = null;
+      } else if (currentEvent) {
+        if (line.startsWith('SUMMARY:')) currentEvent.title = line.substring(8).trim();
+        if (line.startsWith('DESCRIPTION:')) currentEvent.description = line.substring(12).trim();
+        if (line.startsWith('LOCATION:')) currentEvent.location = line.substring(9).trim();
+        if (line.startsWith('DTSTART')) {
+           const parts = line.split(':');
+           if (parts.length > 1) {
+             const rawDate = parts[1].trim();
+             // basic extraction YYYYMMDD
+             if (rawDate.length >= 8) {
+               currentEvent.event_date = `${rawDate.substring(0,4)}-${rawDate.substring(4,6)}-${rawDate.substring(6,8)}`;
+               if (rawDate.length > 8 && rawDate.includes('T')) {
+                 const time = rawDate.split('T')[1];
+                 if (time.length >= 4) {
+                   currentEvent.due_time = `${time.substring(0,2)}:${time.substring(2,4)}`;
+                 }
+               }
+             }
+           }
+        }
+      }
+    }
+
+    if (events.length === 0) {
+      return res.status(400).json({ error: 'No se encontraron eventos válidos en el archivo ICS.' });
+    }
+
+    // Insert events, ignoring exact duplicates
+    let insertedCount = 0;
+    for (const ev of events) {
+      try {
+        await pool.query(
+          `INSERT IGNORE INTO calendar_events (career, semester, title, subject, description, location, due_time, event_date, type, badge_type)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            career,
+            semester,
+            ev.title,
+            ev.title, // use title as subject for now
+            ev.description || '',
+            ev.location || 'Aula Asignada',
+            ev.due_time || '00:00',
+            ev.event_date || '2026-10-01',
+            ev.title.toLowerCase().includes('examen') ? 'examen' : 'entregable',
+            'normal'
+          ]
+        );
+        insertedCount++;
+      } catch (e) {
+        // ignore individual insert errors (e.g. duplicate key)
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Se procesaron ${events.length} eventos. Importación exitosa para la carrera y grado seleccionados.`,
+      eventsFound: events.length
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Error al importar calendario: ' + error.message });
+  }
+});
+
+// 8. Get Calendar Events
+app.get('/api/calendar/events', authenticateToken, async (req: any, res: any) => {
+  const matricula = req.user.matricula;
+  try {
+    const [students] = await pool.query<mysql.RowDataPacket[]>(
+      'SELECT career, semester FROM students WHERE matricula = ?',
+      [matricula]
+    );
+
+    if (students.length === 0) {
+      return res.status(404).json({ error: 'Estudiante no encontrado.' });
+    }
+
+    const { career, semester } = students[0];
+
+    const [events] = await pool.query<mysql.RowDataPacket[]>(
+      'SELECT * FROM calendar_events WHERE career = ? AND semester = ? ORDER BY event_date ASC',
+      [career, semester]
+    );
+
+    // Map to frontend EvaluationItem shape
+    const mapped = events.map(e => ({
+      id: e.id.toString(),
+      badge: e.type === 'examen' ? 'Examen' : 'Entrega',
+      badgeType: e.badge_type || 'normal',
+      type: e.type,
+      dueTime: e.due_time,
+      title: e.title,
+      subject: e.subject,
+      description: e.description,
+      location: e.location,
+      actionText: e.type === 'examen' ? 'Ver Detalles' : 'Entregar',
+      actionIcon: e.type === 'examen' ? 'visibility' : 'upload_file'
+    }));
+
+    res.json({ success: true, events: mapped });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Error al obtener calendario: ' + error.message });
+  }
+});
+
 /* ==========================================================================
    VITE MIDDLEWARE (DEV) & STATIC SERVING (PROD)
    ========================================================================== */

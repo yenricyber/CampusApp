@@ -199,5 +199,52 @@ export const apiService = {
    */
   logout() {
     localStorage.removeItem('campus_app_token');
+  },
+
+  /**
+   * Import shared calendar from ICS content
+   */
+  async importCalendar(icsContent: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+      const token = localStorage.getItem('campus_app_token');
+      const res = await fetch('/api/calendar/import', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ icsContent }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, error: data.error || 'Error al importar calendario' };
+      }
+      return data;
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Error de conexión' };
+    }
+  },
+
+  /**
+   * Get shared calendar events for the student's career and semester
+   */
+  async getCalendarEvents(): Promise<{ success: boolean; events?: any[]; error?: string }> {
+    try {
+      const token = localStorage.getItem('campus_app_token');
+      const res = await fetch('/api/calendar/events', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, error: data.error || 'Error al obtener calendario' };
+      }
+      return data;
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Error de conexión' };
+    }
   }
 };

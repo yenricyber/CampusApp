@@ -76,6 +76,25 @@ export async function initDatabase() {
       )
     `);
 
+    // 4. Calendar Events table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS calendar_events (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        career VARCHAR(255) NOT NULL,
+        semester VARCHAR(50) NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        subject VARCHAR(255),
+        description TEXT,
+        location VARCHAR(255),
+        due_time VARCHAR(50),
+        event_date VARCHAR(50),
+        type VARCHAR(50),
+        badge_type VARCHAR(50),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY unique_event (career, semester, title, event_date)
+      )
+    `);
+
     // Update existing student and user to new domain .universidadlatino.edu.mx if present
     await pool.query(
       `UPDATE students SET email = 'sofia.martinez@universidadlatino.edu.mx' WHERE matricula = '319245678'`

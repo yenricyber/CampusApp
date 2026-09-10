@@ -8,6 +8,8 @@ import {
   getGoogleCalendarUrl,
   getOutlookWebUrl,
 } from '../../utils/icalGenerator';
+import { ImportCalendarModal } from '../modals/ImportCalendarModal';
+import { apiService } from '../../services/api';
 
 interface CalendarioScreenProps {
   onOpenUploadModal: (title: string) => void;
@@ -30,7 +32,20 @@ export const CalendarioScreen: React.FC<CalendarioScreenProps> = ({
   const currentDay = today.getDate();
   const [selectedDay, setSelectedDay] = useState<number>(currentDay);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [timeline, setTimeline] = useState<EvaluationItem[]>(evaluationTimeline);
+
+  React.useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const fetchEvents = async () => {
+    const res = await apiService.getCalendarEvents();
+    if (res.success && res.events && res.events.length > 0) {
+      setTimeline(res.events);
+    }
+  };
 
   const jsDay = today.getDay();
   const currentDayOfWeek = jsDay === 0 ? 7 : jsDay;
@@ -81,7 +96,7 @@ export const CalendarioScreen: React.FC<CalendarioScreenProps> = ({
 
   const handleExportAllQuick = () => {
     const icsContent = generateIcsContent(
-      evaluationTimeline,
+      timeline,
       'Evaluaciones - Universidad Latino'
     );
     downloadIcsFile('evaluaciones_universidad_latino.ics', icsContent);
@@ -110,8 +125,15 @@ export const CalendarioScreen: React.FC<CalendarioScreenProps> = ({
           </div>
         </div>
 
-        {/* Botón de Exportar a iCal / Calendario */}
+        {/* Botones de Importar / Exportar a iCal / Calendario */}
         <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setIsImportModalOpen(true)}
+            className="flex items-center justify-center w-8 h-8 bg-surface-container-high hover:bg-surface-container-highest text-[#0A0A5C] rounded-xl shadow-xs active:scale-95 transition border border-slate-200"
+            title="Importar y sincronizar calendario compartido"
+          >
+            <span className="material-symbols-outlined text-[16px]">upload_file</span>
+          </button>
           <button
             onClick={() => setIsExportModalOpen(true)}
             className="flex items-center gap-1.5 bg-primary-container hover:bg-opacity-90 text-white px-3 py-1.5 rounded-xl font-headline text-xs font-bold shadow-xs active:scale-95 transition"
@@ -268,7 +290,7 @@ export const CalendarioScreen: React.FC<CalendarioScreenProps> = ({
       <div className="flex flex-col gap-3 mt-1">
         <div className="flex items-center justify-between">
           <span className="font-headline text-[11px] uppercase text-on-surface-variant font-bold tracking-wider">
-            Línea Temporal de Evaluaciones ({evaluationTimeline.length})
+            Línea Temporal de Evaluaciones ({timeline.length})
           </span>
           <button
             onClick={() => setIsExportModalOpen(true)}
@@ -280,7 +302,7 @@ export const CalendarioScreen: React.FC<CalendarioScreenProps> = ({
         </div>
 
         {/* Lista Dinámica de Evaluaciones */}
-        {evaluationTimeline.map((item) => {
+        {timeline.map((item) => {
           const isMenuOpen = activeMenuId === item.id;
           const googleLink = getGoogleCalendarUrl(item);
           const outlookLink = getOutlookWebUrl(item);
@@ -443,7 +465,15 @@ export const CalendarioScreen: React.FC<CalendarioScreenProps> = ({
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
         onShowToast={onShowToast}
-        evaluations={evaluationTimeline}
+        evaluations={timeline}
+      />
+
+      {/* Modal de Importación a iCal (.ics) */}
+      <ImportCalendarModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onShowToast={onShowToast}
+        onImportSuccess={fetchEvents}
       />
     </div>
   );
