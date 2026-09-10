@@ -1,235 +1,342 @@
 import express from 'express';
-import cors from 'cors';
+import path from 'path';
 import dotenv from 'dotenv';
-import pool from './db.js';
+import { createServer as createViteServer } from 'vite';
+import { pool, initDatabase } from './server/db';
+import mysql from 'mysql2/promise';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
 dotenv.config();
 
+const JWT_SECRET = process.env.JWT_SECRET || 'campusapp-super-secret-key';
+
 const app = express();
-const port = process.env.PORT || 5000;
+const PORT = 3000;
 
-app.use(cors());
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.json());
 
-// Helper: normaliza un studentId para que siempre se use la forma canónica (la parte antes del @)
-// Esto garantiza que "yenri.moo" y "yenri.moo@universidadlatino.edu.mx" se traten como el mismo usuario
-const normalizeStudentId = (rawId: string): string => {
-  if (!rawId) return '';
-  return rawId.toLowerCase().trim().split('@')[0];
+// Initialize TiDB Cloud tables asynchronously
+let isDbReady = false;
+let dbInitError: string | null = null;
+
+initDatabase()
+  .then(() => {
+    isDbReady = true;
+    console.log('[TiDB Cloud] Database ready and accepting queries.');
+  })
+  .catch((err) => {
+    dbInitError = err.message;
+    console.error('[TiDB Cloud] Database connection failed:', err.message);
+  });
+
+/* ==========================================================================
+   API ENDPOINTS FOR TIDB CLOUD
+   ========================================================================== */
+
+// Middleware to verify JWT token
+const authenticateToken = (req: any, res: any, next: any) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  
+  if (token == null) return res.status(401).json({ error: 'Acceso denegado. Token no proporcionado.' });
+
+  jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
+    if (err) return res.status(403).json({ error: 'Token inválido o expirado.' });
+    req.user = user;
+    next();
+  });
 };
 
-const initDB = async () => {
+// 1. Health & Database Diagnostic
+app.get('/api/health', async (req, res) => {
   try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id VARCHAR(255) PRIMARY KEY,
-        studentId VARCHAR(255) UNIQUE,
-        password VARCHAR(255),
-        name VARCHAR(255),
-        program VARCHAR(255),
-        semester VARCHAR(255),
-        avatarUrl LONGTEXT
-      )
-    `);
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS tasks (
-        id VARCHAR(255) PRIMARY KEY,
-        userId VARCHAR(255),
-        code VARCHAR(50),
-        courseName VARCHAR(255),
-        moduleOrDetail VARCHAR(255),
-        title VARCHAR(255),
-        description TEXT,
-        dueTimeText VARCHAR(255),
-        dueDate VARCHAR(50),
-        dueTime VARCHAR(50),
-        status VARCHAR(50),
-        priority VARCHAR(50),
-        progressPercent INT,
-        timelineSection VARCHAR(50),
-        category VARCHAR(50),
-        data JSON
-      )
-    `);
-    try {
-      await pool.query(`ALTER TABLE users ADD COLUMN avatarUrl LONGTEXT`);
-    } catch (e) {}
-    try {
-      await pool.query(`ALTER TABLE tasks ADD COLUMN userId VARCHAR(255)`);
-    } catch (e) {}
-    console.log('Tables are ready');
-  } catch (error) {
-    console.error('Failed to init DB:', error);
+    const startTime = Date.now();
+    const [rows] = await pool.query<mysql.RowDataPacket[]>('SELECT VERSION() AS version');
+    const latency = Date.now() - startTime;
+
+    res.json({
+      status: 'ok',
+      database: 'connected',
+      provider: 'TiDB Cloud Serverless',
+      version: rows[0]?.version || '8.0',
+      databaseName: process.env.TIDB_DATABASE || 'campus_app',
+      latencyMs: latency,
+      isDbReady,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      status: 'error',
+      database: 'disconnected',
+      error: error.message,
+    });
   }
-};
+});
 
-initDB();
+// 2. Auth: Register Student
+app.post('/api/auth/register', async (req, res) => {
+  const { full_name, matricula, email, password, career, semester, avatarBase64 } = req.body;
 
-// --- Users Endpoints ---
-app.post('/api/register', async (req, res) => {
+  if (!full_name || !matricula || !email || !password || !career || !semester) {
+    return res.status(400).json({ error: 'Todos los campos son obligatorios.' });
+  }
+
+  // Institutional email validation rule (.universidadlatino.edu.mx)
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@([a-zA-Z0-9-]+\.)*universidadlatino\.edu\.mx$/i;
+  if (!emailRegex.test(email.trim())) {
+    return res.status(400).json({ error: 'Por favor, utiliza tu correo institucional válido.' });
+  }
+
   try {
-    const { studentId, password, name, program, semester, avatarUrl } = req.body;
-    const id = Date.now().toString();
+    // Check for existing user in TiDB Cloud
+    const [existing] = await pool.query<mysql.RowDataPacket[]>(
+      'SELECT id FROM users WHERE email = ? OR matricula = ?',
+      [email.trim().toLowerCase(), matricula.trim()]
+    );
+
+    if (existing.length > 0) {
+      return res.status(409).json({ error: 'Ya existe una cuenta con este correo o matrícula.' });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Insert user into TiDB Cloud
+    const [result] = await pool.query<mysql.ResultSetHeader>(
+      `INSERT INTO users (full_name, matricula, email, password, career)
+       VALUES (?, ?, ?, ?, ?)`,
+      [full_name.trim(), matricula.trim(), email.trim().toLowerCase(), hashedPassword, career]
+    );
+
+    // Also register in students profile table
+    const defaultAvatar = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80';
+    const finalAvatar = avatarBase64 || defaultAvatar;
+
     await pool.query(
-      `INSERT INTO users (id, studentId, password, name, program, semester, avatarUrl) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [id, studentId, password, name, program, semester, avatarUrl || '']
+      `INSERT INTO students (
+        matricula, name, email, career, semester, status, gpa, credits_earned, credits_total,
+        attendance, blood_type, validity, barcode, crypto_token, avatar_url
+      ) VALUES (?, ?, ?, ?, ?, 'Alumno Regular',
+        10.0, 0, 340, 100.0, 'O+', 'DIC 2026', CONCAT('LIB-', ?, '-BC'), '7C4A • 18FE • D902', ?)
+      ON DUPLICATE KEY UPDATE name = VALUES(name), email = VALUES(email), career = VALUES(career), semester = VALUES(semester), avatar_url = VALUES(avatar_url)`,
+      [matricula.trim(), full_name.trim(), email.trim().toLowerCase(), career, semester, matricula.trim(), finalAvatar]
     );
-    res.json({ success: true, user: { id, studentId, name, program, semester, avatarUrl } });
-  } catch (error: any) {
-    console.error('Register error:', error);
-    if (error.code === 'ER_DUP_ENTRY' || error.errno === 1062) {
-      return res.status(400).json({ error: 'La matrícula o correo ya está registrado. Por favor inicia sesión.' });
-    }
-    res.status(500).json({ error: error.message });
-  }
-});
 
-// Login flexible: acepta correo completo O matrícula corta, insensible a mayúsculas
-app.post('/api/login', async (req, res) => {
-  try {
-    const { studentId, password } = req.body;
-    const inputLower = studentId.toLowerCase().trim();
-    const shortId = inputLower.split('@')[0];
-
-    // Buscar por coincidencia exacta, por correo completo, o por la parte corta (antes del @)
-    const [rows]: any = await pool.query(
-      `SELECT * FROM users WHERE 
-        (LOWER(studentId) = ? OR LOWER(studentId) = ? OR LOWER(studentId) LIKE ?) 
-        AND password = ?`,
-      [inputLower, shortId, `${shortId}@%`, password]
+    const token = jwt.sign(
+      { userId: result.insertId, matricula: matricula.trim() },
+      JWT_SECRET,
+      { expiresIn: '24h' }
     );
-    if (rows.length > 0) {
-      const user = rows[0];
-      delete user.password;
-      res.json({ success: true, user });
-    } else {
-      res.status(401).json({ error: 'Matrícula o contraseña incorrecta' });
-    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Usuario registrado exitosamente en TiDB Cloud.',
+      userId: result.insertId,
+      token,
+      student: {
+        name: full_name.trim(),
+        matricula: matricula.trim(),
+        email: email.trim().toLowerCase(),
+      },
+    });
   } catch (error: any) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: error.message });
+    console.error('Registration error on TiDB:', error);
+    res.status(500).json({ error: 'Error al registrar en TiDB Cloud: ' + error.message });
   }
 });
 
-app.delete('/api/users/:studentId', async (req, res) => {
-  try {
-    const studentId = req.params.studentId;
-    await pool.query('DELETE FROM users WHERE studentId = ?', [studentId]);
-    
-    // Delete all tasks associated with this user
-    const normalized = normalizeStudentId(studentId);
-    if (normalized) {
-      await pool.query(
-        'DELETE FROM tasks WHERE LOWER(userId) = ? OR LOWER(userId) LIKE ?', 
-        [normalized, `${normalized}@%`]
-      );
-    }
-    
-    res.json({ success: true });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
+// 3. Auth: Login
+app.post('/api/auth/login', async (req, res) => {
+  const { email, password } = req.body;
 
-app.get('/api/users/search', async (req, res) => {
-  try {
-    const q = (req.query.q as string || '').toLowerCase().trim();
-    let query = 'SELECT id, studentId, name, program, semester, avatarUrl FROM users';
-    let params: any[] = [];
-    if (q) {
-      query += ' WHERE LOWER(studentId) LIKE ? OR LOWER(name) LIKE ?';
-      params = [`%${q}%`, `%${q}%`];
-    }
-    query += ' ORDER BY name ASC';
-    const [rows]: any = await pool.query(query, params);
-    res.json(rows);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Correo y contraseña requeridos.' });
   }
-});
 
-// --- Tasks Endpoints ---
-// GET: Busca tareas usando la parte normalizada (corta) del userId para que coincida
-// sin importar si la tarea se guardó con "yenri.moo" o "yenri.moo@universidad..."
-app.get('/api/tasks', async (req, res) => {
-  try {
-    const userId = req.query.userId as string;
-    let query = 'SELECT * FROM tasks';
-    let params: any[] = [];
-    if (userId) {
-      const normalized = normalizeStudentId(userId);
-      // Busca tareas donde el userId empieza con la forma normalizada
-      // Esto matchea tanto "yenri.moo" como "yenri.moo@universidad..."
-      query = `SELECT * FROM tasks WHERE 
-        LOWER(userId) = ? 
-        OR LOWER(userId) LIKE ?
-        OR LOWER(CAST(data AS CHAR)) LIKE ?`;
-      params = [normalized, `${normalized}@%`, `%${normalized}%`];
-    }
-    query += ' ORDER BY dueDate ASC, dueTime ASC';
-    const [rows]: any = await pool.query(query, params);
-    const tasks = rows.map((row: any) => ({
-      ...row,
-      ...row.data,
-      userId: row.userId || row.data?.userId,
-    }));
-    tasks.forEach((t: any) => delete t.data);
-    res.json(tasks);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+  // Institutional email validation rule (.universidadlatino.edu.mx)
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@([a-zA-Z0-9-]+\.)*universidadlatino\.edu\.mx$/i;
+  if (!emailRegex.test(email.trim())) {
+    return res.status(400).json({ error: 'Por favor, utiliza tu correo institucional válido.' });
   }
-});
 
-// POST: Normaliza el userId al guardar para consistencia
-app.post('/api/tasks', async (req, res) => {
   try {
-    const task = req.body;
-    const rawUserId = task.userId || task.studentId || '';
-    // Normalizar: siempre guardamos la forma canónica (antes del @)
-    const userId = normalizeStudentId(rawUserId) || rawUserId;
-    const taskWithNormalizedUser = { ...task, userId };
-    const data = JSON.stringify(taskWithNormalizedUser);
-    await pool.query(
-      `INSERT INTO tasks (id, userId, code, courseName, moduleOrDetail, title, description, dueTimeText, dueDate, dueTime, status, priority, progressPercent, timelineSection, category, data) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [task.id, userId, task.code || '', task.courseName || '', task.moduleOrDetail || '', task.title, task.description || '', task.dueTimeText || '', task.dueDate || '', task.dueTime || '', task.status, task.priority, task.progressPercent || 0, task.timelineSection || '', task.category || '', data]
+    const [rows] = await pool.query<mysql.RowDataPacket[]>(
+      'SELECT * FROM users WHERE email = ?',
+      [email.trim().toLowerCase()]
     );
-    res.json({ success: true });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
 
-app.put('/api/tasks/:id', async (req, res) => {
-  try {
-    const task = req.body;
-    const data = JSON.stringify(task);
-    await pool.query(
-      `UPDATE tasks SET 
-        code=?, courseName=?, moduleOrDetail=?, title=?, description=?, dueTimeText=?, dueDate=?, dueTime=?, status=?, priority=?, progressPercent=?, timelineSection=?, category=?, data=?
-       WHERE id=?`,
-      [task.code || '', task.courseName || '', task.moduleOrDetail || '', task.title, task.description || '', task.dueTimeText || '', task.dueDate || '', task.dueTime || '', task.status, task.priority, task.progressPercent || 0, task.timelineSection || '', task.category || '', data, req.params.id]
+    if (rows.length === 0) {
+      // If user doesn't exist, check students table or create demo account
+      return res.status(401).json({ error: 'Credenciales inválidas o cuenta no registrada.' });
+    }
+
+    const user = rows[0];
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Contraseña incorrecta.' });
+    }
+
+    // Generate JWT
+    const token = jwt.sign(
+      { userId: user.id, matricula: user.matricula },
+      JWT_SECRET,
+      { expiresIn: '24h' }
     );
-    res.json({ success: true });
+
+    // Fetch corresponding student profile
+    const [students] = await pool.query<mysql.RowDataPacket[]>(
+      'SELECT * FROM students WHERE matricula = ?',
+      [user.matricula]
+    );
+
+    // Transform raw DB row into StudentProfile shape
+    const rawStudent = students[0];
+    const studentProfile = rawStudent ? {
+      name: rawStudent.name,
+      matricula: rawStudent.matricula,
+      email: rawStudent.email,
+      career: rawStudent.career,
+      semester: rawStudent.semester,
+      status: rawStudent.status,
+      gpa: Number(rawStudent.gpa),
+      credits: {
+        earned: rawStudent.credits_earned,
+        total: rawStudent.credits_total,
+      },
+      attendance: Number(rawStudent.attendance),
+      bloodType: rawStudent.blood_type,
+      validity: rawStudent.validity,
+      barcode: rawStudent.barcode,
+      cryptoToken: rawStudent.crypto_token,
+      avatarUrl: rawStudent.avatar_url,
+    } : null;
+
+    res.json({
+      success: true,
+      message: 'Sesión iniciada correctamente.',
+      token,
+      user: {
+        id: user.id,
+        name: user.full_name,
+        matricula: user.matricula,
+        email: user.email,
+      },
+      studentProfile,
+    });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error('Login error on TiDB:', error);
+    res.status(500).json({ error: 'Error de autenticación con TiDB Cloud: ' + error.message });
   }
 });
 
-app.delete('/api/tasks/:id', async (req, res) => {
+// 4. Get Current Student Profile
+app.get('/api/student', authenticateToken, async (req: any, res: any) => {
+  const matricula = req.user.matricula;
   try {
-    await pool.query('DELETE FROM tasks WHERE id=?', [req.params.id]);
-    res.json({ success: true });
+    const [rows] = await pool.query<mysql.RowDataPacket[]>(
+      'SELECT * FROM students WHERE matricula = ?',
+      [matricula]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Estudiante no encontrado en TiDB.' });
+    }
+
+    const s = rows[0];
+    res.json({
+      name: s.name,
+      matricula: s.matricula,
+      email: s.email,
+      career: s.career,
+      semester: s.semester,
+      status: s.status,
+      gpa: Number(s.gpa),
+      credits: {
+        earned: s.credits_earned,
+        total: s.credits_total,
+      },
+      attendance: Number(s.attendance),
+      bloodType: s.blood_type,
+      validity: s.validity,
+      barcode: s.barcode,
+      cryptoToken: s.crypto_token,
+      avatarUrl: s.avatar_url,
+    });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error al consultar estudiante en TiDB: ' + error.message });
   }
 });
 
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+// 5. Submit Activity to TiDB Cloud
+app.post('/api/activities/submit', authenticateToken, async (req: any, res: any) => {
+  const { activity_title, file_name, file_size, comments } = req.body;
+  const matricula = req.user.matricula;
+
+  if (!activity_title || !file_name) {
+    return res.status(400).json({ error: 'Datos de entrega incompletos.' });
+  }
+
+  try {
+    const [result] = await pool.query<mysql.ResultSetHeader>(
+      `INSERT INTO submissions (matricula, activity_title, file_name, file_size, comments)
+       VALUES (?, ?, ?, ?, ?)`,
+      [matricula, activity_title, file_name, file_size || '1.2 MB', comments || '']
+    );
+
+    res.json({
+      success: true,
+      submissionId: result.insertId,
+      message: 'Entrega guardada exitosamente en TiDB Cloud.',
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Error al registrar entrega en TiDB: ' + error.message });
+  }
+});
+
+// 6. Delete Account
+app.delete('/api/auth/delete-account', authenticateToken, async (req: any, res: any) => {
+  const { matricula } = req.body;
+  const tokenMatricula = req.user.matricula;
+
+  if (matricula !== tokenMatricula) {
+    return res.status(403).json({ error: 'No autorizado para eliminar esta cuenta.' });
+  }
+
+  try {
+    // Delete from users, students, and submissions tables
+    await pool.query('DELETE FROM users WHERE matricula = ?', [matricula]);
+    await pool.query('DELETE FROM students WHERE matricula = ?', [matricula]);
+    await pool.query('DELETE FROM submissions WHERE matricula = ?', [matricula]);
+
+    res.json({ success: true, message: 'Cuenta eliminada permanentemente.' });
+  } catch (error: any) {
+    console.error('Delete account error:', error);
+    res.status(500).json({ error: 'Error al eliminar cuenta: ' + error.message });
+  }
+});
+
+/* ==========================================================================
+   VITE MIDDLEWARE (DEV) & STATIC SERVING (PROD)
+   ========================================================================== */
+
+async function startServer() {
+  if (process.env.NODE_ENV !== 'production') {
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'spa',
+    });
+    app.use(vite.middlewares);
+  } else {
+    const distPath = path.join(process.cwd(), 'dist');
+    app.use(express.static(distPath));
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+  }
+
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`[CampusApp] Server running on http://0.0.0.0:${PORT}`);
   });
 }
-export default app;
 
+startServer();

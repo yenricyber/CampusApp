@@ -173,7 +173,14 @@ export const apiService = {
         body: JSON.stringify({ matricula }),
       });
 
-      const data = await res.json();
+      let data;
+      const contentType = res.headers.get("content-type");
+      if (contentType && contentType.indexOf("application/json") !== -1) {
+        data = await res.json();
+      } else {
+        data = { error: 'Respuesta no válida del servidor.' };
+      }
+
       if (!res.ok) {
         return { success: false, error: data.error || 'Error al eliminar cuenta' };
       }
