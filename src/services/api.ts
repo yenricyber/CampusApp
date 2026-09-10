@@ -1,5 +1,31 @@
 import { StudentProfile } from '../types';
 
+// Helper functions for cookies
+function setCookie(name: string, value: string, days = 7) {
+  let expires = "";
+  if (days) {
+    const date = new Date();
+    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+    expires = "; expires=" + date.toUTCString();
+  }
+  document.cookie = name + "=" + (value || "") + expires + "; path=/";
+}
+
+function getCookie(name: string) {
+  const nameEQ = name + "=";
+  const ca = document.cookie.split(';');
+  for(let i = 0; i < ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+    if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+  }
+  return null;
+}
+
+function eraseCookie(name: string) {
+  document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+}
+
 export interface DbHealthResponse {
   status: 'ok' | 'error';
   database: 'connected' | 'disconnected';
@@ -51,7 +77,7 @@ export const apiService = {
       }
 
       if (data.token) {
-        localStorage.setItem('campus_app_token', data.token);
+        setCookie('campus_app_token', data.token);
       }
 
       return {
@@ -97,7 +123,7 @@ export const apiService = {
       }
 
       if (data.token) {
-        localStorage.setItem('campus_app_token', data.token);
+        setCookie('campus_app_token', data.token);
       }
 
       return {
@@ -115,7 +141,7 @@ export const apiService = {
    */
   async getStudent(matricula?: string): Promise<StudentProfile | null> {
     try {
-      const token = localStorage.getItem('campus_app_token');
+      const token = getCookie('campus_app_token');
       const res = await fetch(`/api/student`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -139,7 +165,7 @@ export const apiService = {
     comments?: string;
   }): Promise<{ success: boolean; message?: string }> {
     try {
-      const token = localStorage.getItem('campus_app_token');
+      const token = getCookie('campus_app_token');
       const res = await fetch('/api/activities/submit', {
         method: 'POST',
         headers: { 
@@ -165,7 +191,7 @@ export const apiService = {
    */
   async deleteAccount(matricula: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const token = localStorage.getItem('campus_app_token');
+      const token = getCookie('campus_app_token');
       const res = await fetch('/api/auth/delete-account', {
         method: 'DELETE',
         headers: {
@@ -187,7 +213,7 @@ export const apiService = {
         return { success: false, error: data.error || 'Error al eliminar cuenta' };
       }
 
-      localStorage.removeItem('campus_app_token');
+      eraseCookie('campus_app_token');
       return { success: true };
     } catch (err: any) {
       return { success: false, error: err.message || 'Error de conexión' };
@@ -198,7 +224,7 @@ export const apiService = {
    * Log out the current student
    */
   logout() {
-    localStorage.removeItem('campus_app_token');
+    eraseCookie('campus_app_token');
   },
 
   /**
@@ -206,7 +232,7 @@ export const apiService = {
    */
   async importCalendar(icsContent: string): Promise<{ success: boolean; message?: string; error?: string }> {
     try {
-      const token = localStorage.getItem('campus_app_token');
+      const token = getCookie('campus_app_token');
       const res = await fetch('/api/calendar/import', {
         method: 'POST',
         headers: {
@@ -231,7 +257,7 @@ export const apiService = {
    */
   async getCalendarEvents(): Promise<{ success: boolean; events?: any[]; error?: string }> {
     try {
-      const token = localStorage.getItem('campus_app_token');
+      const token = getCookie('campus_app_token');
       const res = await fetch('/api/calendar/events', {
         headers: {
           'Authorization': `Bearer ${token}`
