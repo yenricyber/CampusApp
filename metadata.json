@@ -1,7 +1,6 @@
 {
-  "name": "UniTask",
-  "description": "Portal estudiantil de tareas y gestión académica con calendario, registro rápido y seguimiento.",
+  "name": "Academic Portal System",
+  "description": "Portal estudiantil y credencial digital institucional con gestión de materias, calendario de evaluaciones, avisos oficiales, trámites y credencial criptográfica offline.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
-

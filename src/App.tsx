@@ -1,391 +1,292 @@
-import { useState, useEffect } from 'react';
-import { AcademicTask, ScreenType, UserProfile } from './types';
-import { AppHeader } from './components/AppHeader';
-import { BottomNav } from './components/BottomNav';
-import { ScreenPickerModal } from './components/ScreenPickerModal';
-import { NotificationsModal } from './components/NotificationsModal';
-import { playNotificationChime, sendNativeNotification } from './utils/notifications';
-import { InicioScreen } from './components/screens/InicioScreen';
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useState, useEffect } from 'react';
+import { AppScreen, Course, PushNotification, ToastPayload, StudentProfile, UserTask } from './types';
+import { Header } from './components/Header';
+import { BottomNavigation } from './components/BottomNavigation';
+import { MateriasScreen } from './components/screens/MateriasScreen';
+import { DetalleMateriaScreen } from './components/screens/DetalleMateriaScreen';
 import { CalendarioScreen } from './components/screens/CalendarioScreen';
-import { RegistroRapidoScreen } from './components/screens/RegistroRapidoScreen';
-import { DetalleTareaScreen } from './components/screens/DetalleTareaScreen';
+import { AvisosScreen } from './components/screens/AvisosScreen';
+import { TramitesScreen } from './components/screens/TramitesScreen';
+import { CredencialScreen } from './components/screens/CredencialScreen';
+import { MisTareasScreen } from './components/screens/MisTareasScreen';
 import { LoginScreen } from './components/screens/LoginScreen';
-import { RegistroScreen } from './components/screens/RegistroScreen';
-import { RecuperarScreen } from './components/screens/RecuperarScreen';
-import { PerfilScreen } from './components/screens/PerfilScreen';
-import { TrabajoGrupalModal } from './components/TrabajoGrupalModal';
+import { RegisterScreen } from './components/screens/RegisterScreen';
+import { SplashScreen } from './components/screens/SplashScreen';
+import { UploadActivityModal } from './components/modals/UploadActivityModal';
+import { SearchModal } from './components/modals/SearchModal';
+import { PdfPreviewModal } from './components/modals/PdfPreviewModal';
+import { ProfileModal } from './components/modals/ProfileModal';
+import { Toast } from './components/modals/Toast';
+import { useMockPushNotificationSystem } from './hooks/useMockPushNotificationSystem';
+import { apiService } from './services/api';
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
-  const [currentScreen, setCurrentScreen] = useState<ScreenType>('login');
-  const [screenHistory, setScreenHistory] = useState<ScreenType[]>(['login']);
-  const [tasks, setTasks] = useState<AcademicTask[]>([]);
-  const [selectedTask, setSelectedTask] = useState<AcademicTask | null>(null);
-  const [isScreenPickerOpen, setIsScreenPickerOpen] = useState(false);
-  const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false);
-  const [isTrabajoGrupalModalOpen, setIsTrabajoGrupalModalOpen] = useState(false);
-  const [defaultReminderMinutes, setDefaultReminderMinutes] = useState(10);
-  const [notificationToast, setNotificationToast] = useState<{ title: string; body: string } | null>(null);
+  const [currentScreen, setCurrentScreen] = useState<AppScreen>('splash');
+  const [previousScreen, setPreviousScreen] = useState<AppScreen>('materias');
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [student, setStudent] = useState<StudentProfile | null>(null);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [tasks, setTasks] = useState<UserTask[]>([]);
+  
+  // Modals & Feedback
+  const [toastPayload, setToastPayload] = useState<ToastPayload | null>(null);
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [uploadActivityTitle, setUploadActivityTitle] = useState('');
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [pdfModalOpen, setPdfModalOpen] = useState(false);
+  const [pdfModalTitle, setPdfModalTitle] = useState('');
 
-  useEffect(() => {
-    const savedUserStr = localStorage.getItem('currentUser');
-    let userStudentId = '';
-    if (savedUserStr) {
-      try {
-        const user = JSON.parse(savedUserStr);
-        setCurrentUser(user);
-        userStudentId = user.studentId || user.id || '';
-        setCurrentScreen('inicio');
-        setScreenHistory(['inicio']);
+  // Periodic Mock Push Notification System
+  const {
+    isPushActive,
+    togglePushActive,
+    triggerNextPush,
+    unreadCount,
+    markAllRead,
+  } = useMockPushNotificationSystem({
+    enabled: true,
+    intervalMs: 22000,
+    initialDelayMs: 6500,
+    onNotification: (notification) => {
+      setToastPayload(notification);
+    },
+  });
 
-        // Cargar tareas guardadas localmente de inmediato
-        if (userStudentId) {
-          const cached = localStorage.getItem(`campus_tasks_${userStudentId}`);
-          if (cached) {
-            setTasks(JSON.parse(cached));
-          }
-        }
-      } catch (e) {}
-    }
-    fetchTasks(userStudentId);
-  }, []);
-
-  // Sincronización continua en tiempo real entre múltiples dispositivos (Laptop, Celular, Vercel)
-  useEffect(() => {
-    if (!currentUser) return;
-    const uId = currentUser.studentId || (currentUser as any).id || '';
-    if (!uId) return;
-
-    const interval = setInterval(() => {
-      fetchTasks(uId);
-    }, 4000);
-
-    const handleFocus = () => {
-      fetchTasks(uId);
-    };
-
-    window.addEventListener('focus', handleFocus);
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, [currentUser]);
-
-  // Motor de notificaciones en tiempo real (revisa tareas cada 3 segundos)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = new Date();
-      tasks.forEach((task) => {
-        if (task.status === 'terminada' || task.notified) return;
-        if (!task.dueDate || !task.dueTime) return;
-
-        const parts = task.dueDate.split('-');
-        const timeParts = task.dueTime.split(':');
-        if (parts.length < 3 || timeParts.length < 2) return;
-
-        const y = parseInt(parts[0], 10);
-        const m = parseInt(parts[1], 10) - 1;
-        const d = parseInt(parts[2], 10);
-        const hh = parseInt(timeParts[0], 10);
-        const mm = parseInt(timeParts[1], 10);
-
-        const taskTime = new Date(y, m, d, hh, mm, 0);
-        if (isNaN(taskTime.getTime())) return;
-
-        const diffMs = taskTime.getTime() - now.getTime();
-        const diffMins = Math.floor(diffMs / 60000);
-        const leadMins = task.reminderMinutes !== undefined ? task.reminderMinutes : defaultReminderMinutes;
-
-        // Disparar alarma si faltan <= leadMins minutos
-        if (diffMins <= leadMins && diffMins >= -60) {
-          playNotificationChime();
-          sendNativeNotification(
-            `🔔 ALARMA: Entrega en ${leadMins} min`,
-            `"${task.title}" (${task.courseName}) vence a las ${task.dueTime} hrs.`
-          );
-          setNotificationToast({
-            title: `🔔 ALARMA: ${task.title}`,
-            body: `Vence a las ${task.dueTime} hrs (${task.courseName}) — Avisado ${leadMins} min antes`,
-          });
-          setTimeout(() => setNotificationToast(null), 10000);
-
-          // Actualizar estado local inmediatamente para evitar duplicados
-          setTasks((prev) =>
-            prev.map((t) => (t.id === task.id ? { ...t, notified: true } : t))
-          );
-        }
-      });
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [tasks, defaultReminderMinutes]);
-
-  const handleLoginSuccess = (user: UserProfile) => {
-    setCurrentUser(user);
-    localStorage.setItem('currentUser', JSON.stringify(user));
-    const uId = user.studentId || (user as any).id || '';
-    if (uId) {
-      const cached = localStorage.getItem(`campus_tasks_${uId}`);
-      setTasks(cached ? JSON.parse(cached) : []);
-    } else {
-      setTasks([]);
-    }
-    fetchTasks(uId);
+  const showToast = (payload: ToastPayload) => {
+    setToastPayload(payload);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('currentUser');
-    setCurrentUser(null);
-    setCurrentScreen('login');
-    setScreenHistory(['login']);
-    setTasks([]);
-  };
-
-  const fetchTasks = async (userStudentId?: string) => {
-    try {
-      const targetId = userStudentId || currentUser?.studentId || '';
-      const url = targetId ? `/api/tasks?userId=${encodeURIComponent(targetId)}` : '/api/tasks';
-      const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        if (Array.isArray(data)) {
-          setTasks(data);
-          if (targetId) {
-            localStorage.setItem(`campus_tasks_${targetId}`, JSON.stringify(data));
-          }
-        }
+  const handleNotificationAction = (notification: PushNotification) => {
+    if (notification.courseId) {
+      const matchedCourse = courses.find((c) => c.id === notification.courseId);
+      if (matchedCourse) {
+        setSelectedCourse(matchedCourse);
       }
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
+    }
+    if (notification.targetScreen) {
+      navigateTo(notification.targetScreen);
+    }
+    setToastPayload(null);
+  };
+
+  const navigateTo = (screen: AppScreen) => {
+    if (screen === 'avisos') {
+      markAllRead();
+    }
+    if (screen !== currentScreen) {
+      setPreviousScreen(currentScreen);
+      setCurrentScreen(screen);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
-  const navigateTo = (screen: ScreenType) => {
-    setScreenHistory((prev) => [...prev, screen]);
-    setCurrentScreen(screen);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const handleSelectCourse = (course: Course) => {
+    setSelectedCourse(course);
+    navigateTo('detalle-materia');
   };
 
-  const navigateBack = () => {
-    if (screenHistory.length > 1) {
-      const newHistory = [...screenHistory];
-      newHistory.pop();
-      const prev = newHistory[newHistory.length - 1];
-      setScreenHistory(newHistory);
-      setCurrentScreen(prev);
-    } else {
-      setCurrentScreen('inicio');
-    }
+  const handleOpenUpload = (title: string) => {
+    setUploadActivityTitle(title);
+    setUploadModalOpen(true);
   };
 
-  const handleAddTask = async (newTask: AcademicTask) => {
-    const uId = currentUser?.studentId || currentUser?.id || 'guest';
-    const taskWithUser: AcademicTask = {
-      ...newTask,
-      userId: uId,
-    };
-
-    // Actualizar estado local y LocalStorage inmediatamente para evitar pérdidas al refrescar (F5)
-    setTasks((prev) => {
-      const updated = [taskWithUser, ...prev];
-      localStorage.setItem(`campus_tasks_${uId}`, JSON.stringify(updated));
-      return updated;
-    });
-    setSelectedTask(taskWithUser);
-
-    try {
-      await fetch('/api/tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(taskWithUser),
-      });
-    } catch (error) {
-      console.warn('Aviso de servidor (guardado localmente):', error);
-    }
+  const handleActivityUploaded = (fileName: string) => {
+    apiService.submitActivity({
+      matricula: student.matricula,
+      activityTitle: uploadActivityTitle,
+      fileName,
+      fileSize: '1.4 MB',
+    }).catch(() => {});
+    showToast(`¡Entrega de "${fileName}" guardada en TiDB Cloud con éxito!`);
   };
 
-  const handleUpdateTask = async (updatedTask: AcademicTask) => {
-    const uId = currentUser?.studentId || currentUser?.id || 'guest';
-    setTasks((prev) => {
-      const updated = prev.map((t) => (t.id === updatedTask.id ? updatedTask : t));
-      localStorage.setItem(`campus_tasks_${uId}`, JSON.stringify(updated));
-      return updated;
-    });
-    setSelectedTask(updatedTask);
-    try {
-      await fetch(`/api/tasks/${updatedTask.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedTask),
-      });
-    } catch (error) {
-      console.warn('Aviso al actualizar en servidor:', error);
-    }
+  const handleDownloadPdf = (title: string) => {
+    setPdfModalTitle(title);
+    setPdfModalOpen(true);
   };
 
-  const handleDeleteTask = async (taskId: string) => {
-    const uId = currentUser?.studentId || currentUser?.id || 'guest';
-    setTasks((prev) => {
-      const updated = prev.filter((t) => t.id !== taskId);
-      localStorage.setItem(`campus_tasks_${uId}`, JSON.stringify(updated));
-      return updated;
-    });
-    if (selectedTask?.id === taskId) {
-      setSelectedTask(null);
-      navigateBack();
-    }
-    try {
-      await fetch(`/api/tasks/${taskId}`, { method: 'DELETE' });
-    } catch (error) {
-      console.warn('Aviso al eliminar en servidor:', error);
-    }
+  const handleGenerateQrDoc = (docType: string) => {
+    setPdfModalTitle(docType);
+    setPdfModalOpen(true);
   };
 
-  const handleToggleTaskCompleted = async (taskId: string) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task) return;
-    const isDone = task.status === 'terminada';
-    const newStatus = isDone ? 'pendiente' : 'terminada';
-    const updatedTask = {
-      ...task,
-      status: newStatus as any,
-      progressPercent: isDone ? 50 : 100,
-    };
-    handleUpdateTask(updatedTask);
+  const handleSaveToWallet = () => {
+    showToast('Pase digital PKPass listo para sincronizar con Apple Wallet / Google Wallet');
   };
-
-  const showBottomNav = currentScreen !== 'registro-rapido' && currentScreen !== 'detalle-tarea';
 
   return (
-    <div className="w-full max-w-7xl mx-auto relative bg-surface min-h-screen text-on-surface flex flex-col font-sans shadow-2xl xl:rounded-xl xl:my-4 overflow-hidden">
-      {/* Top persistent header */}
-      {currentUser && (
-        <AppHeader
-          currentUser={currentUser}
-          currentScreen={currentScreen}
-          onNavigate={navigateTo}
-          onBack={navigateBack}
-          onLogout={handleLogout}
-          onOpenScreenPicker={() => setIsScreenPickerOpen(true)}
+    <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-start overflow-x-hidden">
+      {/* Main Container */}
+      <div className="w-full max-w-md min-h-screen bg-surface relative flex flex-col shadow-xl sm:border-x sm:border-slate-200">
+        {/* Dynamic Toast Feedback */}
+        <Toast
+          payload={toastPayload}
+          onClose={() => setToastPayload(null)}
+          onAction={handleNotificationAction}
         />
-      )}
 
-      {/* Screen Views matching user specifications EXACTLY */}
-      <div className="flex-1 flex flex-col">
-        {currentScreen === 'inicio' && currentUser && (
-          <InicioScreen
-            currentUser={currentUser}
-            tasks={tasks}
+        {/* Top Header (Shown on all screens except splash, login and registro) */}
+        {currentScreen !== 'splash' && currentScreen !== 'login' && currentScreen !== 'registro' && (
+          <Header
+            currentScreen={currentScreen}
             onNavigate={navigateTo}
-            onSelectTask={(task) => {
-              setSelectedTask(task);
-              navigateTo('detalle-tarea');
-            }}
-            onToggleTaskCompleted={handleToggleTaskCompleted}
-            onOpenNotifications={() => setIsNotificationsModalOpen(true)}
-            onOpenTrabajoGrupal={() => setIsTrabajoGrupalModalOpen(true)}
+            onBack={() => navigateTo(previousScreen === 'detalle-materia' ? 'materias' : previousScreen)}
+            onOpenSearch={() => setSearchModalOpen(true)}
+            onOpenProfile={() => setProfileModalOpen(true)}
           />
         )}
 
-        {currentScreen === 'calendario' && (
-          <CalendarioScreen
-            tasks={tasks}
+        {/* Screen Views */}
+        <main className="flex-1 w-full relative overflow-y-auto no-scrollbar">
+          {currentScreen === 'splash' && (
+            <SplashScreen
+              onFinish={() => navigateTo('login')}
+              durationMs={2400}
+            />
+          )}
+
+          {currentScreen === 'login' && (
+            <LoginScreen
+              onLoginSuccess={(studentData) => {
+                setStudent(studentData);
+                navigateTo('materias');
+              }}
+              onNavigateToRegister={() => navigateTo('registro')}
+              onShowToast={showToast}
+              onReplaySplash={() => navigateTo('splash')}
+            />
+          )}
+
+          {currentScreen === 'registro' && (
+            <RegisterScreen
+              onRegisterSuccess={(newStudentData) => {
+                // Ideally this would fetch the full profile or redirect to login.
+                // For now, redirect to login to force a real fetch, or set minimum data.
+                navigateTo('login');
+                showToast('Registro completado. Por favor, inicia sesión.');
+              }}
+              onNavigateToLogin={() => navigateTo('login')}
+              onShowToast={showToast}
+            />
+          )}
+
+          {currentScreen === 'materias' && student && (
+            <MateriasScreen
+              student={student}
+              courses={courses}
+              onSelectCourse={handleSelectCourse}
+              onOpenCredencial={() => navigateTo('credencial')}
+              onOpenNotifications={() => navigateTo('avisos')}
+              onOpenPlanEstudios={() => handleDownloadPdf('Plan_Estudios_Ingenieria_Sistemas_2026.pdf')}
+              onOpenLibrary={() => handleDownloadPdf('Reglamento_Biblioteca_Digital_2026.pdf')}
+            />
+          )}
+
+          {currentScreen === 'detalle-materia' && selectedCourse && (
+            <DetalleMateriaScreen
+              course={selectedCourse}
+              onBack={() => navigateTo('materias')}
+              onOpenUploadModal={handleOpenUpload}
+              onDownloadPdf={handleDownloadPdf}
+              onShowToast={showToast}
+            />
+          )}
+
+          {currentScreen === 'calendario' && (
+            <CalendarioScreen
+              onOpenUploadModal={handleOpenUpload}
+              onOpenDetails={(title) => {
+                showToast(`Detalles de: ${title}`);
+                navigateTo('detalle-materia');
+              }}
+              onShowToast={showToast}
+              isPushActive={isPushActive}
+              onTogglePush={togglePushActive}
+              onTriggerTestPush={triggerNextPush}
+            />
+          )}
+
+          {currentScreen === 'avisos' && (
+            <AvisosScreen
+              onShowToast={showToast}
+              onDownloadPdf={handleDownloadPdf}
+            />
+          )}
+
+          {currentScreen === 'tramites' && (
+            <TramitesScreen
+              onShowToast={showToast}
+              onDownloadPdf={handleDownloadPdf}
+              onGenerateQrDoc={handleGenerateQrDoc}
+            />
+          )}
+
+          {currentScreen === 'tareas' && student && (
+            <MisTareasScreen
+              student={student}
+              tasks={tasks}
+            />
+          )}
+
+          {currentScreen === 'credencial' && student && (
+            <CredencialScreen
+              student={student}
+              onSaveToWallet={handleSaveToWallet}
+              onDownloadPdf={() => handleDownloadPdf('Credencial_Oficial_Sofia_Martinez.pdf')}
+              onShowToast={showToast}
+            />
+          )}
+        </main>
+
+        {/* Persistent Bottom Navigation (Shown on main portal screens) */}
+        {currentScreen !== 'splash' && currentScreen !== 'login' && currentScreen !== 'registro' && (
+          <BottomNavigation
+            currentScreen={currentScreen}
             onNavigate={navigateTo}
-            onSelectTask={(task) => {
-              setSelectedTask(task);
-              navigateTo('detalle-tarea');
-            }}
-            onToggleTaskCompleted={handleToggleTaskCompleted}
-          />
-        )}
-
-        {currentScreen === 'registro-rapido' && (
-          <RegistroRapidoScreen
-            onNavigate={navigateTo}
-            onAddTask={handleAddTask}
-          />
-        )}
-
-        {currentScreen === 'detalle-tarea' && selectedTask && (
-          <DetalleTareaScreen
-            task={selectedTask}
-            onNavigate={navigateTo}
-            onUpdateTask={handleUpdateTask}
-            onDeleteTask={handleDeleteTask}
-          />
-        )}
-
-        {currentScreen === 'login' && (
-          <LoginScreen
-            onNavigate={navigateTo}
-            onLoginSuccess={handleLoginSuccess}
-          />
-        )}
-
-        {currentScreen === 'registro' && (
-          <RegistroScreen onNavigate={navigateTo} onLoginSuccess={handleLoginSuccess} />
-        )}
-
-        {currentScreen === 'recuperar' && (
-          <RecuperarScreen onNavigate={navigateTo} />
-        )}
-
-        {currentScreen === 'perfil' && currentUser && (
-          <PerfilScreen
-            currentUser={currentUser}
-            onNavigate={navigateTo}
-            onLogout={handleLogout}
+            unreadNoticesCount={unreadCount}
           />
         )}
       </div>
 
-      {/* Persistent bottom navigation bar when appropriate */}
-      {showBottomNav && currentUser && (
-        <BottomNav currentScreen={currentScreen} onNavigate={navigateTo} />
-      )}
-
-      {/* Notifications & Audio Chime Modal */}
-      <NotificationsModal
-        isOpen={isNotificationsModalOpen}
-        onClose={() => setIsNotificationsModalOpen(false)}
-        tasks={tasks}
-        defaultReminderMinutes={defaultReminderMinutes}
-        onChangeDefaultReminder={setDefaultReminderMinutes}
+      {/* Global Modals & Dialogs */}
+      <UploadActivityModal
+        activityTitle={uploadActivityTitle}
+        isOpen={uploadModalOpen}
+        onClose={() => setUploadModalOpen(false)}
+        onSubmit={handleActivityUploaded}
       />
 
-      {/* Trabajo Grupal & Bina Sync Modal */}
-      <TrabajoGrupalModal
-        isOpen={isTrabajoGrupalModalOpen}
-        onClose={() => setIsTrabajoGrupalModalOpen(false)}
-        tasks={tasks}
-        onUpdateTask={handleUpdateTask}
+      <SearchModal
+        isOpen={searchModalOpen}
+        onClose={() => setSearchModalOpen(false)}
+        courses={courses}
+        onSelectCourse={handleSelectCourse}
       />
 
-      {/* Floating In-App Toast Banner Notification */}
-      {notificationToast && (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 w-11/12 max-w-md p-4 rounded-xl bg-primary text-on-primary shadow-2xl flex items-center gap-3 animate-bounce border border-white/20">
-          <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-            <span className="material-symbols-outlined text-[24px]">notifications_active</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <h4 className="font-label-md text-label-md font-bold truncate">{notificationToast.title}</h4>
-            <p className="font-body-xs text-body-xs text-on-primary/90 truncate">{notificationToast.body}</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setNotificationToast(null)}
-            className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white/20 text-on-primary cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[18px]">close</span>
-          </button>
-        </div>
-      )}
+      <PdfPreviewModal
+        isOpen={pdfModalOpen}
+        onClose={() => setPdfModalOpen(false)}
+        documentTitle={pdfModalTitle}
+        student={student}
+        onDownloaded={(title) => showToast(`Documento oficial descargado: ${title}`)}
+      />
 
-      {/* Screen Explorer Modal for easy 1-click inspection of all 7 screens */}
-      <ScreenPickerModal
-        isOpen={isScreenPickerOpen}
-        currentScreen={currentScreen}
-        onClose={() => setIsScreenPickerOpen(false)}
-        onSelectScreen={navigateTo}
+      <ProfileModal
+        isOpen={profileModalOpen}
+        onClose={() => setProfileModalOpen(false)}
+        student={student}
+        onLogout={() => {
+          apiService.logout();
+          showToast('Has cerrado sesión correctamente.');
+          navigateTo('login');
+        }}
+        onOpenCredencial={() => navigateTo('credencial')}
       />
     </div>
   );

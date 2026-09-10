@@ -1,7 +1,7 @@
 import React from 'react';
 import { ScreenType } from '../types';
 import { ASSETS } from '../data/mockData';
-
+import { UniversidadLatinoLogo } from './common/UniversidadLatinoLogo';
 import { UserProfile } from '../types';
 
 interface AppHeaderProps {
@@ -51,11 +51,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               <span className="material-symbols-outlined text-[24px]">arrow_back</span>
             </button>
             <div className="flex items-center gap-space-2xs min-w-0">
-              <img
-                alt="CampusApp Brand Logo"
-                className="h-6 w-auto object-contain hidden xs:inline-block shrink-0"
-                src={ASSETS.logo}
-              />
+              <UniversidadLatinoLogo size={24} className="hidden xs:inline-flex" />
               <h1 className="font-headline-sm text-headline-sm text-on-surface truncate">
                 {getSubScreenTitle()}
               </h1>
@@ -66,11 +62,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             className="flex items-center gap-space-xs cursor-pointer select-none"
             onClick={() => onNavigate('inicio')}
           >
-            <img
-              alt="CampusApp Brand Logo"
-              className="h-8 w-auto object-contain"
-              src={ASSETS.logo}
-            />
+            <UniversidadLatinoLogo size={32} />
             <span className="font-headline-sm text-headline-sm text-primary tracking-tight font-bold">
               CampusApp
             </span>

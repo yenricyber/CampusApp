@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { UserProfile, ScreenType } from '../../types';
-import { ASSETS } from '../../data/mockData';
+import { apiService } from '../../services/api';
 
 interface PerfilScreenProps {
   currentUser: UserProfile;
@@ -14,36 +14,33 @@ export const PerfilScreen: React.FC<PerfilScreenProps> = ({
   onLogout
 }) => {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleDeleteAccount = async () => {
-    if (confirm('¿Estás seguro de que deseas eliminar tu cuenta permanentemente? Todos tus datos serán borrados y esta acción no se puede deshacer.')) {
-      setIsDeleting(true);
-      try {
-        const res = await fetch(`/api/users/${currentUser.studentId}`, {
-          method: 'DELETE',
-        });
-        if (res.ok) {
-          alert('Cuenta eliminada con éxito.');
-          onLogout();
-        } else {
-          const data = await res.json();
-          alert(`Error al eliminar: ${data.error}`);
-        }
-      } catch (err) {
-        alert('Error de conexión al intentar eliminar la cuenta.');
-      } finally {
-        setIsDeleting(false);
+    setIsDeleting(true);
+    try {
+      const res = await apiService.deleteAccount(currentUser.matricula);
+      if (res.success) {
+        apiService.logout();
+        onLogout();
+      } else {
+        alert(`Error al eliminar: ${res.error}`);
       }
+    } catch (err) {
+      alert('Error de conexión al intentar eliminar la cuenta.');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
     }
   };
 
   return (
     <main className="flex flex-col relative w-full pt-16 pb-24 bg-surface min-h-screen">
-      <div className="flex flex-col w-full px-margin-mobile pt-space-md max-w-2xl mx-auto gap-space-lg md:bg-surface-container-lowest md:p-8 md:rounded-2xl md:shadow-xl md:border md:border-surface-container md:my-8">
+      <div className="flex flex-col w-full px-4 pt-6 max-w-md mx-auto gap-5">
         
         {/* Profile Card */}
-        <div className="bg-surface-container-lowest rounded-xl shadow-xs p-space-lg flex flex-col items-center gap-space-md">
-          <div className="w-24 h-24 rounded-full overflow-hidden ring-4 ring-primary-container shadow-md bg-primary-container flex items-center justify-center text-on-primary-container">
+        <div className="bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center gap-4 border border-slate-100">
+          <div className="w-24 h-24 rounded-full overflow-hidden ring-4 ring-[#0A0A5C]/20 shadow-md bg-[#0A0A5C] flex items-center justify-center">
             {currentUser.avatarUrl ? (
               <img
                 src={currentUser.avatarUrl}
@@ -51,55 +48,77 @@ export const PerfilScreen: React.FC<PerfilScreenProps> = ({
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full font-headline-lg text-[36px] font-bold flex items-center justify-center uppercase select-none">
+              <div className="w-full h-full text-white font-bold text-[36px] flex items-center justify-center uppercase select-none">
                 {currentUser.name ? currentUser.name.charAt(0) : <span className="material-symbols-outlined text-[48px]">person</span>}
               </div>
             )}
           </div>
           <div className="text-center">
-            <h2 className="font-headline-sm text-headline-sm font-bold text-on-surface">
+            <h2 className="text-lg font-bold text-slate-900">
               {currentUser.name}
             </h2>
-            <p className="font-body-md text-body-md text-on-surface-variant">
-              {currentUser.studentId}
+            <p className="text-sm text-slate-500 font-mono">
+              {currentUser.matricula}
+            </p>
+            <p className="text-xs text-slate-400 mt-0.5">
+              {currentUser.email}
             </p>
           </div>
           <div className="flex flex-wrap gap-2 justify-center">
-            <span className="px-3 py-1 bg-primary-container text-on-primary-container rounded-full font-label-sm text-label-sm font-semibold">
-              {currentUser.program}
+            <span className="px-3 py-1 bg-[#0A0A5C]/10 text-[#0A0A5C] rounded-full text-xs font-semibold">
+              {currentUser.career}
             </span>
-            <span className="px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full font-label-sm text-label-sm font-semibold">
+            <span className="px-3 py-1 bg-[#FADE0A]/20 text-[#0A0A5C] rounded-full text-xs font-semibold">
               {currentUser.semester}
             </span>
           </div>
         </div>
 
-        {/* Security Settings */}
-        <div className="bg-surface-container-lowest rounded-xl shadow-xs p-space-lg flex flex-col gap-space-sm">
-          <h3 className="font-label-lg text-label-lg font-bold text-on-surface flex items-center gap-2">
-            <span className="material-symbols-outlined text-[20px] text-primary">lock</span>
-            Seguridad y Acceso
+        {/* Academic Info */}
+        <div className="bg-white rounded-2xl shadow-lg p-5 border border-slate-100">
+          <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 mb-3">
+            <span className="material-symbols-outlined text-[20px] text-[#0A0A5C]">school</span>
+            Información Académica
           </h3>
-          <div className="h-[1px] bg-surface-container w-full my-1"></div>
-          <div className="flex flex-col gap-1">
-            <span className="font-label-sm text-label-sm text-on-surface-variant">Contraseña</span>
-            <div className="flex items-center justify-between bg-surface-container-low px-3 py-2 rounded-lg">
-              <span className="font-body-md text-body-md tracking-[0.2em] text-on-surface">
-                ••••••••
-              </span>
-              <button type="button" className="text-primary font-label-sm font-semibold hover:underline">
-                Cambiar
-              </button>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="text-center p-3 bg-slate-50 rounded-xl">
+              <p className="text-lg font-bold text-[#0A0A5C] font-mono">{Number(currentUser.gpa || 0).toFixed(2)}</p>
+              <p className="text-[10px] text-slate-500 uppercase font-semibold">Promedio</p>
+            </div>
+            <div className="text-center p-3 bg-slate-50 rounded-xl">
+              <p className="text-lg font-bold text-[#0A0A5C] font-mono">{currentUser.credits?.earned ?? 0}</p>
+              <p className="text-[10px] text-slate-500 uppercase font-semibold">Créditos</p>
+            </div>
+            <div className="text-center p-3 bg-slate-50 rounded-xl">
+              <p className="text-lg font-bold text-[#0A0A5C] font-mono">{currentUser.attendance}%</p>
+              <p className="text-[10px] text-slate-500 uppercase font-semibold">Asistencia</p>
             </div>
           </div>
         </div>
 
+        {/* Security Settings */}
+        <div className="bg-white rounded-2xl shadow-lg p-5 border border-slate-100">
+          <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 mb-3">
+            <span className="material-symbols-outlined text-[20px] text-[#0A0A5C]">lock</span>
+            Seguridad y Acceso
+          </h3>
+          <div className="flex items-center justify-between bg-slate-50 px-4 py-3 rounded-xl">
+            <div>
+              <span className="text-xs text-slate-500">Contraseña</span>
+              <p className="font-mono tracking-[0.2em] text-slate-800">••••••••</p>
+            </div>
+            <button type="button" className="text-[#0A0A5C] text-xs font-bold hover:underline">
+              Cambiar
+            </button>
+          </div>
+        </div>
+
         {/* Actions */}
-        <div className="flex flex-col gap-space-md mt-space-sm">
+        <div className="flex flex-col gap-3 mt-1">
           <button
             type="button"
             onClick={() => { if (confirm('¿Deseas cerrar sesión?')) onLogout(); }}
-            className="w-full h-12 bg-surface-container hover:bg-surface-container-high rounded-xl text-on-surface font-label-lg font-bold flex items-center justify-center gap-2 transition-colors"
+            className="w-full h-12 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 font-bold text-sm flex items-center justify-center gap-2 transition-colors"
           >
             <span className="material-symbols-outlined text-[20px]">logout</span>
             Cerrar Sesión
@@ -107,16 +126,58 @@ export const PerfilScreen: React.FC<PerfilScreenProps> = ({
           
           <button
             type="button"
-            onClick={handleDeleteAccount}
-            disabled={isDeleting}
-            className="w-full h-12 border-2 border-error text-error hover:bg-error hover:text-white rounded-xl font-label-lg font-bold flex items-center justify-center gap-2 transition-colors"
+            onClick={() => setShowDeleteConfirm(true)}
+            className="w-full h-12 border-2 border-rose-500 text-rose-500 hover:bg-rose-500 hover:text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors"
           >
             <span className="material-symbols-outlined text-[20px]">delete_forever</span>
-            {isDeleting ? 'Eliminando...' : 'Eliminar Cuenta Permanentemente'}
+            Eliminar Cuenta Permanentemente
           </button>
         </div>
 
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-6">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center">
+                <span className="material-symbols-outlined text-rose-600 text-[28px]">warning</span>
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900">Eliminar cuenta</h3>
+                <p className="text-xs text-slate-500">Esta acción es irreversible</p>
+              </div>
+            </div>
+            <p className="text-sm text-slate-600 mb-5">
+              Se eliminarán permanentemente todos tus datos, incluyendo tu perfil, tareas y entregas. 
+              <span className="font-bold text-rose-600"> No se puede deshacer.</span>
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 h-11 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 font-bold text-sm transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                disabled={isDeleting}
+                className="flex-1 h-11 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
+              >
+                {isDeleting ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                    Eliminando...
+                  </>
+                ) : 'Sí, eliminar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 };

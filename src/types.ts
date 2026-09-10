@@ -1,57 +1,129 @@
-export type ScreenType = 
-  | 'inicio' 
-  | 'calendario' 
-  | 'registro-rapido' 
-  | 'detalle-tarea' 
-  | 'login' 
-  | 'registro' 
-  | 'recuperar'
-  | 'perfil';
+export type AppScreen =
+  | 'splash'
+  | 'login'
+  | 'registro'
+  | 'materias'
+  | 'calendario'
+  | 'avisos'
+  | 'tramites'
+  | 'credencial'
+  | 'tareas'
+  | 'detalle-materia';
 
-export interface Subtask {
+export type ScreenType = AppScreen | 'inicio' | 'perfil';
+export type UserProfile = StudentProfile;
+export type AcademicTask = UserTask;
+export type Subtask = any;
+
+export interface Course {
   id: string;
-  title: string;
-  completed: boolean;
+  code: string;
+  name: string;
+  type: 'Obligatoria' | 'Especialidad';
+  professor: string;
+  professorEmail: string;
+  professorTitle: string;
+  classroom: string;
+  schedule: string;
+  progress: number;
+  pendingCount: number;
+  isRelocated?: boolean;
+  relocationText?: string;
+  units: CourseUnit[];
+  gradeAverage: number;
 }
 
-export interface AcademicTask {
+export interface CourseUnit {
   id: string;
-  userId?: string;
-  code: string; // e.g., 'ING-302', 'HUM-110'
-  courseName: string; // e.g., 'Ingeniería de Software'
-  moduleOrDetail: string; // e.g., 'Módulo 3: Requisitos'
+  title: string;
+  activities: CourseActivity[];
+}
+
+export interface CourseActivity {
+  id: string;
+  number: string;
   title: string;
   description: string;
-  dueTimeText: string; // e.g., 'Hoy, 23:59 hrs', '23:59 hrs'
-  dueDate: string; // YYYY-MM-DD
-  dueTime: string; // HH:mm
-  status: 'pendiente' | 'en_progreso' | 'terminada';
-  priority: 'baja' | 'media' | 'urgente';
-  urgentBadge?: string; // '¡Cierra hoy!', 'Urgente'
-  timeRemaining?: string; // 'Quedan 28 hrs', 'Faltan 4 horas'
-  attachmentsCount?: number;
-  attachmentName?: string;
-  attachmentSize?: string;
-  progressPercent?: number;
-  collaborators?: string[];
-  partnerName?: string;
-  partnerPhoto?: string;
-  professorName?: string;
-  professorPhoto?: string;
-  grade?: string; // e.g., 'Nota: 10/10'
-  subtasks?: Subtask[];
-  timelineSection?: 'hoy' | 'manana' | 'proxima' | 'reciente';
-  category?: 'dev' | 'humanities' | 'networks' | 'math' | 'all';
-  reminderMinutes?: number; // Minutes before due date/time to alert (default 10)
-  notified?: boolean; // Flag if reminder chime/notification was already sent
+  status: 'pending' | 'graded' | 'submitted' | 'urgent';
+  grade?: string;
+  uploadedDate: string;
+  dueDate: string;
+  rubricName?: string;
+  rubricSize?: string;
+  feedback?: string;
 }
 
-export interface UserProfile {
+export interface UserTask {
+  id: string;
+  usuario_id: string; // The matricula or ID of the student
+  materia: string;
+  titulo: string;
+  fechaEntrega: string;
+  estado: 'pendiente' | 'completada';
+}
+
+export interface Notice {
+  id: string;
+  category: 'Cambios de Aula' | 'Servicios Escolares' | 'Avisos de Dirección' | 'Fechas de Pago';
+  tag: string;
+  timeAgo: string;
+  title: string;
+  content: string;
+  location?: string;
+  deadline?: string;
+  pdfLink?: string;
+  notes?: string;
+  isUrgent?: boolean;
+  verifiedStamp?: string;
+  read?: boolean;
+}
+
+export interface EvaluationItem {
+  id: string;
+  badge: string;
+  badgeType: 'urgent' | 'soon' | 'next';
+  dueTime: string;
+  title: string;
+  subject: string;
+  location: string;
+  actionText: string;
+  actionIcon: string;
+  startDate?: string;
+  endDate?: string;
+  description?: string;
+  type?: 'proyecto' | 'actividad' | 'examen' | 'practica';
+}
+
+export interface PushNotification {
+  id: string;
+  title: string;
+  message: string;
+  category: 'exam' | 'announcement' | 'urgent' | 'payment';
+  badge?: string;
+  timestamp?: string;
+  targetScreen?: AppScreen;
+  actionText?: string;
+  courseId?: string;
+}
+
+export type ToastPayload = string | PushNotification;
+
+export interface StudentProfile {
   name: string;
-  studentId: string;
-  program: string;
+  matricula: string;
+  email?: string;
+  career: string;
   semester: string;
-  campus: string;
+  status: string;
+  gpa: number;
+  credits: {
+    earned: number;
+    total: number;
+  };
+  attendance: number;
+  bloodType: string;
+  validity: string;
+  barcode: string;
+  cryptoToken: string;
   avatarUrl: string;
-  streakDays: number;
 }
