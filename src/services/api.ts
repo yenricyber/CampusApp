@@ -74,6 +74,7 @@ export const apiService = {
     password: string;
     career: string;
     semester: string;
+    avatarBase64?: string;
   }): Promise<{ success: boolean; student?: any; message?: string; error?: string }> {
     try {
       const res = await fetch('/api/auth/register', {
@@ -86,6 +87,7 @@ export const apiService = {
           password: params.password,
           career: params.career,
           semester: params.semester,
+          avatarBase64: params.avatarBase64,
         }),
       });
 

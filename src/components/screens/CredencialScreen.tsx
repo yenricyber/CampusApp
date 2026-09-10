@@ -91,8 +91,8 @@ export const CredencialScreen: React.FC<CredencialScreenProps> = ({
             <div className="w-24 h-28 rounded-xl overflow-hidden shadow-lg bg-surface-container-high border border-white/20">
               <img
                 className="w-full h-full object-cover"
-                alt="Retrato de estudiante Sofía Martínez Reyes"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuB93_sZuj9NOv_NGlYA9idEJMWvUByf74-kV80PwlL1vhJhhSoiGz7rzHKSseu8LzOKWhEcslUyi7E2W_IKK_6V72sf4qi0UA1SGx6teEe71EGSk4SLQs9NXsSb7mQ1svvk5xx8tyX9taehxrXoywi_LNjaJX0XzLWNEuvWvRXOTDtZ-QpvBqf9OgnpjjG5pmZ__U2JXGPOpbNAOJcvJ4pS4K3n2M4KTlH7mvWfmshOamxSk9K3VOSI"
+                alt={`Retrato de estudiante ${student.name}`}
+                src={student.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80"}
                 referrerPolicy="no-referrer"
               />
             </div>
