@@ -122,16 +122,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     onShowToast(`Se ha enviado un enlace de recuperación seguro a ${correoInstitucional}`);
   };
 
-  const handleBiometric = () => {
-    const emailValidation = validateInstitutionalEmail(correoInstitucional);
-    if (emailValidation) {
-      setEmailError(emailValidation);
-      onShowToast('Por favor, utiliza tu correo institucional válido para el acceso biométrico.');
-      return;
-    }
-    onShowToast('Autenticación biométrica no disponible por ahora.');
-  };
-
   const isEmailValid =
     correoInstitucional.trim() !== '' &&
     !emailError &&
@@ -365,17 +355,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 </span>
               </button>
 
-              {/* Botón Secundario: Acceso Biométrico */}
-              <button
-                type="button"
-                onClick={handleBiometric}
-                className="w-full bg-slate-100 hover:bg-slate-200/80 active:scale-[0.99] text-slate-700 border border-slate-200/70 text-xs font-headline font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[19px] text-[#0A0A5C]">
-                  fingerprint
-                </span>
-                <span>Acceso biométrico (FaceID / Huella)</span>
-              </button>
             </div>
           </form>
 
