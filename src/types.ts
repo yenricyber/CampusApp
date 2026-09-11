@@ -8,11 +8,36 @@ export type AppScreen =
   | 'tramites'
   | 'credencial'
   | 'tareas'
-  | 'detalle-materia';
+  | 'detalle-materia'
+  | 'registro-rapido'
+  | 'detalle-tarea'
+  | 'recuperar';
 
 export type ScreenType = AppScreen | 'inicio' | 'perfil';
 export type UserProfile = StudentProfile;
-export type AcademicTask = UserTask;
+export interface AcademicTask {
+  id: string;
+  code?: string;
+  courseName?: string;
+  moduleOrDetail?: string;
+  title?: string;
+  description?: string;
+  dueDate?: string;
+  dueTime?: string;
+  dueTimeText?: string;
+  status?: string;
+  priority?: string;
+  reminderMinutes?: number;
+  urgentBadge?: string;
+  timeRemaining?: string;
+  attachmentsCount?: number;
+  attachmentName?: string;
+  attachmentSize?: string;
+  progress?: number;
+  progressPercent?: number;
+  subtasks?: any[];
+  [key: string]: any;
+}
 export type Subtask = any;
 
 export interface Course {
@@ -81,8 +106,8 @@ export interface Notice {
 export interface EvaluationItem {
   id: string;
   badge: string;
-  badgeType: 'normal' | 'urgent' | 'soon';
-  type: 'examen' | 'entregable';
+  badgeType: 'normal' | 'urgent' | 'soon' | 'next';
+  type?: 'proyecto' | 'actividad' | 'examen' | 'practica' | 'entregable';
   date?: string;
   dueTime: string;
   title: string;
@@ -93,7 +118,6 @@ export interface EvaluationItem {
   startDate?: string;
   endDate?: string;
   description?: string;
-  type?: 'proyecto' | 'actividad' | 'examen' | 'practica';
 }
 
 export interface PushNotification {

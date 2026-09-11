@@ -282,7 +282,6 @@ export const evaluationTimeline: EvaluationItem[] = [
     startDate: '2026-10-30T08:30:00',
     endDate: '2026-10-30T10:30:00',
     description: 'Examen de laboratorio sobre planes de ejecución, índices B-Tree, particionamiento y tuning.',
-    type: 'examen',
   },
 ];
 
